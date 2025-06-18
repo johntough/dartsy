@@ -1,6 +1,6 @@
-import logo from './logo.svg';
 import './App.css';
 import MatchCentre from './pages/MatchCentre';
+import GoogleLoginButton from "./components/GoogleLoginButton";
 
 function App() {
 
@@ -8,6 +8,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
+        <GoogleLoginButton></GoogleLoginButton>
         <MatchCentre></MatchCentre>
       </header>
     </div>

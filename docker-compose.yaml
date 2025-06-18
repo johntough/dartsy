@@ -11,6 +11,18 @@ services:
     networks:
       - app-network
 
+  authentication:
+    build:
+      context: ./authentication
+      dockerfile: Dockerfile
+    env_file: ./authentication/environment-variables/.env
+    ports:
+      - "8081:8080"
+    volumes:
+      - sqlite-data:/data
+    networks:
+      - app-network
+
   frontend:
     build:
       context: ./frontend
@@ -31,6 +43,7 @@ services:
 
 volumes:
   redis-data:
+  sqlite-data:
 
 networks:
   app-network:
