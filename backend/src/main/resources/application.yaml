@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: "backend"
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+server:
+  port: 8080
