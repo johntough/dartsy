@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Client} from '@stomp/stompjs';
+import { toast } from 'react-toastify';
 import SockJS from 'sockjs-client';
 
 const MatchCentre = () => {
@@ -23,12 +24,19 @@ const MatchCentre = () => {
                 if (!localStorageMatchId) return;
 
                 fetch(`http://localhost:8080/match/restore/${localStorageMatchId}`,{
-                    method: 'GET'
+                    method: 'GET',
+                    credentials: 'include'
                 })
                     .then((response) => {
-                        if (response.ok) {
-                            return response.json();
+                        if (response.status === 401) {
+                            throw new Error("Unauthorized");
                         }
+
+                        if (!response.ok) {
+                            throw new Error("Something went wrong.");
+                        }
+
+                        return response.json();
                     })
                     .then((matchState) => {
                         setScores(matchState.scores);
@@ -36,6 +44,7 @@ const MatchCentre = () => {
                         subscribeToMatch(matchState.matchId);
                     })
                     .catch(error => {
+                        toast.error(error.message);
                         console.error('Error restoring match');
                     });
 
@@ -67,35 +76,51 @@ const MatchCentre = () => {
     // TODO: You should only be able to do this if you don't have an active match. i.e. you need to finish or terminate your active match (if there is one)
     const configureMatch = () => {
         fetch(`http://localhost:8080/match/configure`,{
-            method: 'POST'
+            method: 'POST',
+            credentials: 'include'
         })
             .then((response) => {
-                if (response.ok) {
-                    return response.text();
+                if (response.status === 401) {
+                    throw new Error("Unauthorized");
                 }
+
+                if (!response.ok) {
+                    throw new Error("Something went wrong.");
+                }
+
+                return response.text();
             })
             .then((matchId) => {
                 setMatchId(matchId);
                 localStorage.setItem('matchId', matchId);
             })
             .catch(error => {
+                toast.error(error.message);
                 console.error('Error configuring match');
             });
     };
 
     const getActiveMatches = () => {
         fetch(`http://localhost:8080/matches/active`,{
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         })
             .then((response) => {
-                if (response.ok) {
-                    return response.json();
+                if (response.status === 401) {
+                    throw new Error("Unauthorized");
                 }
+
+                if (!response.ok) {
+                    throw new Error("Something went wrong.");
+                }
+
+                return response.json();
             })
             .then(data => {
                 setActiveMatches(data);
             })
             .catch(error => {
+                toast.error(error.message);
                 console.error('Error getting active matches');
             });
     };

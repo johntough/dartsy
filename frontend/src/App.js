@@ -1,6 +1,8 @@
 import './App.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import MatchCentre from './pages/MatchCentre';
-import GoogleLoginButton from "./components/GoogleLoginButton";
+import GoogleAuthButton from "./components/GoogleAuthButton";
 
 function App() {
 
@@ -8,9 +10,10 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <GoogleLoginButton></GoogleLoginButton>
+        <GoogleAuthButton></GoogleAuthButton>
         <MatchCentre></MatchCentre>
       </header>
+        <ToastContainer />
     </div>
   );
 }
