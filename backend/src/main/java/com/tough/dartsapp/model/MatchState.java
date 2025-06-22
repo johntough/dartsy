@@ -6,7 +6,7 @@ import java.util.List;
 public class MatchState {
     private String matchId;
     private MatchStatus matchStatus;
-    private List<ScoreEntry> scores = new ArrayList<>();
+    private List<UserMatchState> userMatchStateList = new ArrayList<>();
 
     public String getMatchId() {
         return matchId;
@@ -22,10 +22,19 @@ public class MatchState {
         this.matchStatus = matchStatus;
     }
 
-    public List<ScoreEntry> getScores() {
-        return scores;
+    public List<UserMatchState> getUserMatchStateList() {
+        return userMatchStateList;
     }
-    public void setScores(List<ScoreEntry> scores) {
-        this.scores = scores;
+    public void setUserMatchStateList(List<UserMatchState> userMatchStateList) {
+        this.userMatchStateList = userMatchStateList;
+    }
+
+    public UserMatchState findUserMatchStateByUserId(String id) {
+        for (UserMatchState userMatchState : userMatchStateList) {
+            if (userMatchState.getUserId().equals(id)) {
+                return userMatchState;
+            }
+        }
+        return null;
     }
 }

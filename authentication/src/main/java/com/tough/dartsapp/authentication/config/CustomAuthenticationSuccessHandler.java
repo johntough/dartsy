@@ -32,8 +32,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
         try {
-            String jwt = jwtUtil.createToken(oidcUser.getSubject());
-            Cookie cookie = new Cookie("jwt", jwt);
+            String jwt = jwtUtil.createToken(oidcUser);
+            Cookie cookie = new Cookie("darts-app-jwt", jwt);
             cookie.setHttpOnly(true);
             cookie.setSecure(false);
             cookie.setPath("/");

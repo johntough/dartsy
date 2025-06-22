@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import '../styles/button.css';
 
-const GoogleAuthButton = () => {
+const GoogleAuthButton = ({ setUserId, setUserName }) => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -11,13 +11,24 @@ const GoogleAuthButton = () => {
             credentials: 'include'
         })
             .then(response => {
-                if (response.ok) {
-                    setIsAuthenticated(true);
-                } else {
-                    setIsAuthenticated(false);
+                if (response.status === 401) {
+                    throw new Error("Unauthorized");
                 }
-            })
-            .catch(() => setIsAuthenticated(false));
+
+                if (!response.ok) {
+                    throw new Error("Something went wrong.");
+                }
+
+                return response.json();
+            }).then(json => {
+                setIsAuthenticated(true);
+                setUserId(json.idpSubject);
+                setUserName(json.name);
+        })
+            .catch(() => {
+                setIsAuthenticated(false);
+                clearUserInfo();
+            });
     }, []);
 
     const handleClick = () => {
@@ -29,13 +40,22 @@ const GoogleAuthButton = () => {
                 .then(response => {
                     if (response.ok) {
                         setIsAuthenticated(false);
+                        clearUserInfo();
                     }
                 })
-                .catch(() => setIsAuthenticated(false));
+                .catch(() => {
+                    setIsAuthenticated(false);
+                    clearUserInfo();
+                });
         } else {
             window.location.href = "http://localhost:8081/oauth2/authorization/google";
         }
     };
+
+    const clearUserInfo = () => {
+        setUserId(null);
+        setUserName(null);
+    }
 
     const buttonText = isAuthenticated ? "Sign Out" : "Sign in with Google";
 

@@ -1,6 +1,7 @@
 package com.tough.dartsapp.service;
 
 import com.tough.dartsapp.model.MatchState;
+import com.tough.dartsapp.model.UserMatchState;
 import com.tough.dartsapp.model.ScoreEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +45,17 @@ public class ScoreService {
     }
 
     private void updateMatchState(MatchState matchState, ScoreEntry score) {
+
+        UserMatchState player = matchState.findUserMatchStateByUserId(score.getUserId());
+
+        if (player == null) {
+            // TODO: handle exception correctly: return 404?
+            throw new IllegalArgumentException("User not found with ID: " + score.getUserId());
+        }
+
         // using 1-based indexing as that's how the game of darts works (i.e. you don't have a zero throw)
-        score.setRoundIndex(matchState.getScores().size() + 1);
-        matchState.getScores().add(score);
+        score.setRoundIndex(player.getScores().size() + 1);
+        player.getScores().add(score);
     }
 
     private void sendWebSocketMessage(MatchState matchState) {

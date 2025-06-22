@@ -1,7 +1,9 @@
 package com.tough.dartsapp.service;
 
+import com.tough.dartsapp.model.MatchConfigRequest;
 import com.tough.dartsapp.model.MatchState;
 import com.tough.dartsapp.model.MatchStatus;
+import com.tough.dartsapp.model.UserMatchState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +27,16 @@ public class MatchService {
         this.redisTemplate = redisTemplate;
     }
 
-    public String configureMatch() {
+    public String configureMatch(MatchConfigRequest matchConfigRequest) {
         String matchId = UUID.randomUUID().toString();
 
         MatchState matchState = new MatchState();
         matchState.setMatchId(matchId);
         matchState.setMatchStatus(MatchStatus.IN_PROGRESS);
+
+        UserMatchState userMatchState = new UserMatchState();
+        userMatchState.setUserId(matchConfigRequest.getUserId());
+        matchState.setUserMatchStateList(List.of(userMatchState));
 
         storeInRedis(matchState);
 

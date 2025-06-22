@@ -3,7 +3,7 @@ import {Client} from '@stomp/stompjs';
 import { toast } from 'react-toastify';
 import SockJS from 'sockjs-client';
 
-const MatchCentre = () => {
+const MatchCentre = ({ userId, userName }) => {
     const [matchId, setMatchId] = useState('');
     const [activeMatches, setActiveMatches] = useState([]);
     const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -39,7 +39,7 @@ const MatchCentre = () => {
                         return response.json();
                     })
                     .then((matchState) => {
-                        setScores(matchState.scores);
+                        setScores(matchState.userMatchStateList[0].scores);
                         setMatchId(matchState.matchId)
                         subscribeToMatch(matchState.matchId);
                     })
@@ -75,9 +75,18 @@ const MatchCentre = () => {
 
     // TODO: You should only be able to do this if you don't have an active match. i.e. you need to finish or terminate your active match (if there is one)
     const configureMatch = () => {
+
+        const matchConfig = {
+            userId: userId
+        };
+
         fetch(`http://localhost:8080/match/configure`,{
             method: 'POST',
-            credentials: 'include'
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(matchConfig)
         })
             .then((response) => {
                 if (response.status === 401) {
@@ -140,8 +149,8 @@ const MatchCentre = () => {
         subscription.current = stompClient.current.subscribe(
             `/topic/match/${id}`,
             (message) => {
-                const scoreUpdate = JSON.parse(message.body);
-                setScores(scoreUpdate.scores);
+                const matchState = JSON.parse(message.body);
+                setScores(matchState.userMatchStateList[0].scores);
             }
         );
     }
@@ -160,7 +169,7 @@ const MatchCentre = () => {
         if (stompClient.current && stompClient.current.connected) {
             stompClient.current.publish({
                 destination: `/app/match/${matchId}/score`,
-                body: JSON.stringify({ roundScore: scoreInput }),
+                body: JSON.stringify({ userId: userId, roundScore: scoreInput }),
             });
             setScoreInput(''); // clear input after sending
         } else {
@@ -170,6 +179,13 @@ const MatchCentre = () => {
 
     return (
         <div>
+            <div>
+                {userId ? (
+                    <p>Welcome, {userName}! Your ID is {userId}.</p>
+                ) : (
+                    <p>Please log in.</p>
+                )}
+            </div>
             <button className="button" onClick={configureMatch}>Configure Match</button>
             <p>Match ID: {matchId || 'Not configured'}</p>
            <div>

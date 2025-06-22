@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Component;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -31,13 +32,15 @@ public class JwtUtil {
         this.securityConfig = securityConfig;
     }
 
-    public String createToken(String userId) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public String createToken(OidcUser oidcUser) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-        LOGGER.info("Creating JWT token for User ID: {}", userId);
+        String userSub = oidcUser.getSubject();
+        LOGGER.info("Creating JWT token for User ID: {}", userSub);
 
         return Jwts.builder()
-                .subject(userId)
+                .subject(userSub)
                 .claim("roles", List.of("ROLE_USER"))
+                .claim("userName", oidcUser.getName())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(createPrivateKey())

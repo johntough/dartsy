@@ -48,7 +48,7 @@ public class SecurityConfig {
         )
         .logout(logout -> logout
                 .logoutUrl("/auth/logout")
-                .deleteCookies("jwt")
+                .deleteCookies("darts-app-jwt")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .logoutSuccessUrl("http://localhost:3000").permitAll()

@@ -23,7 +23,7 @@ public class ScoreController {
     @MessageMapping("/match/{matchId}/score")
     public void sendScore(@DestinationVariable String matchId, @Payload ScoreEntry score) {
 
-        LOGGER.info("Message received for match id: {}, Score: {}", matchId, score.getRoundScore());
+        LOGGER.info("Message received for match id: {}, Player id: {} scored {}", matchId, score.getUserId(), score.getRoundScore());
 
         scoreService.registerScore(matchId, score);
     }

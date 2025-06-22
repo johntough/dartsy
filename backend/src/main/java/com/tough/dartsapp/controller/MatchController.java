@@ -1,5 +1,6 @@
 package com.tough.dartsapp.controller;
 
+import com.tough.dartsapp.model.MatchConfigRequest;
 import com.tough.dartsapp.model.MatchState;
 import com.tough.dartsapp.service.MatchService;
 import org.slf4j.Logger;
@@ -7,10 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,9 +26,9 @@ public class MatchController {
     }
 
     @PostMapping("match/configure")
-    public ResponseEntity<String> configureMatch() {
-        LOGGER.info("POST match/configure called");
-        String matchId = matchService.configureMatch();
+    public ResponseEntity<String> configureMatch(@RequestBody MatchConfigRequest matchConfigRequest) {
+        LOGGER.info("POST match/configure called for user {}", matchConfigRequest.getUserId());
+        String matchId = matchService.configureMatch(matchConfigRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(matchId);
     }
 

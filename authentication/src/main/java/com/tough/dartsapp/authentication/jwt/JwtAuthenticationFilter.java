@@ -36,11 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtUtil.validateToken(token)) {
             try {
-                request.setAttribute("userId", jwtUtil.getUserIdFromToken(token));
+                request.setAttribute("userSub", jwtUtil.getUserIdFromToken(token));
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                 setUnauthorizedResponseHeaders(response, requestURI);
             }
-            request.setAttribute("jwt", token);
+            request.setAttribute("darts-app-jwt", token);
             filterChain.doFilter(request, response);
         } else {
             setUnauthorizedResponseHeaders(response, requestURI);
@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("jwt".equals(cookie.getName())) {
+                if ("darts-app-jwt".equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }
