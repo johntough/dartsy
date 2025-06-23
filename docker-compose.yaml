@@ -9,6 +9,8 @@ services:
     environment:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    volumes:
+      - sqlite-data:/data
     networks:
       - app-network
 

@@ -20,6 +20,7 @@ public class ScoreController {
     public ScoreController(ScoreService scoreService) {
         this.scoreService = scoreService;
     }
+
     @MessageMapping("/match/{matchId}/score")
     public void sendScore(@DestinationVariable String matchId, @Payload ScoreEntry score) {
 
