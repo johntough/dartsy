@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 
-const GameConfiguration = ({ userSubject, userName, matchId, setMatchId }) => {
+const MatchConfiguration = ({ userSubject, userName, matchId, setMatchId }) => {
 
     const [users, setUsers] = useState([]);
     const [challengedUser, setChallengedUser] = useState(null);
@@ -102,4 +102,4 @@ const GameConfiguration = ({ userSubject, userName, matchId, setMatchId }) => {
     );
 };
 
-export default GameConfiguration;
+export default MatchConfiguration;

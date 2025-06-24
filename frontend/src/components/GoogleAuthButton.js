@@ -1,9 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect} from "react";
 import '../styles/button.css';
 
-const GoogleAuthButton = ({ setUserSubject, setUserName }) => {
-
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+const GoogleAuthButton = ({ setUserSubject, setUserName, isAuthenticated, setIsAuthenticated}) => {
 
     useEffect(() => {
         fetch("http://localhost:8081/auth/status", {
@@ -24,8 +22,6 @@ const GoogleAuthButton = ({ setUserSubject, setUserName }) => {
                 setIsAuthenticated(true);
                 setUserSubject(json.idpSubject);
                 setUserName(json.name);
-                // clear matchId in case a stale matchId is hanging around from previous login
-                localStorage.removeItem('matchId');
         })
             .catch(() => {
                 setIsAuthenticated(false);
@@ -43,13 +39,17 @@ const GoogleAuthButton = ({ setUserSubject, setUserName }) => {
                     if (response.ok) {
                         setIsAuthenticated(false);
                         clearUserInfo();
+                        localStorage.removeItem('matchId');
                     }
                 })
                 .catch(() => {
                     setIsAuthenticated(false);
                     clearUserInfo();
+                    localStorage.removeItem('matchId');
                 });
         } else {
+            // clear matchId in case a stale matchId is hanging around from previous login
+            localStorage.removeItem('matchId');
             window.location.href = "http://localhost:8081/oauth2/authorization/google";
         }
     };

@@ -1,12 +1,11 @@
 package com.tough.dartsapp.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MatchState {
     private String matchId;
     private MatchStatus matchStatus;
-    private List<UserMatchState> userMatchStateList = new ArrayList<>();
+    private UserMatchState initiatorUserMatchState;
+    private UserMatchState challengedUserMatchState;
+
 
     public String getMatchId() {
         return matchId;
@@ -22,18 +21,28 @@ public class MatchState {
         this.matchStatus = matchStatus;
     }
 
-    public List<UserMatchState> getUserMatchStateList() {
-        return userMatchStateList;
+    public UserMatchState getInitiatorUserMatchState() {
+        return initiatorUserMatchState;
     }
-    public void setUserMatchStateList(List<UserMatchState> userMatchStateList) {
-        this.userMatchStateList = userMatchStateList;
+
+    public void setInitiatorUserMatchState(UserMatchState initiatorUserMatchState) {
+        this.initiatorUserMatchState = initiatorUserMatchState;
+    }
+
+    public UserMatchState getChallengedUserMatchState() {
+        return challengedUserMatchState;
+    }
+
+    public void setChallengedUserMatchState(UserMatchState challegedUserMatchState) {
+        this.challengedUserMatchState = challegedUserMatchState;
     }
 
     public UserMatchState findUserMatchStateByUserSubject(String subject) {
-        for (UserMatchState userMatchState : userMatchStateList) {
-            if (userMatchState.getUserSubject().equals(subject)) {
-                return userMatchState;
-            }
+
+        if (initiatorUserMatchState.getSubject().equals(subject)) {
+            return initiatorUserMatchState;
+        } else if (challengedUserMatchState.getSubject().equals(subject)) {
+            return challengedUserMatchState;
         }
         return null;
     }

@@ -18,11 +18,12 @@ public class MatchService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchService.class);
 
     private final RedisTemplate<String, MatchState> redisTemplate;
-
+    private final MatchRequestService matchRequestService;
 
     @Autowired
-    public MatchService(RedisTemplate<String, MatchState> redisTemplate) {
+    public MatchService(RedisTemplate<String, MatchState> redisTemplate, MatchRequestService matchRequestService) {
         this.redisTemplate = redisTemplate;
+        this.matchRequestService = matchRequestService;
     }
 
     public String configureMatch(MatchConfigRequest matchConfigRequest) {
@@ -33,16 +34,20 @@ public class MatchService {
         matchState.setMatchStatus(MatchStatus.REQUESTED);
 
         UserMatchState initiator = new UserMatchState();
-        initiator.setUserSubject(matchConfigRequest.getInitiatorUserSubject());
-        initiator.setUserName(matchConfigRequest.getInitiatorUserName());
+        initiator.setSubject(matchConfigRequest.getInitiatorUserSubject());
+        initiator.setName(matchConfigRequest.getInitiatorUserName());
 
         UserMatchState challengedUser = new UserMatchState();
-        challengedUser.setUserSubject(matchConfigRequest.getChallengedUserSubject());
-        challengedUser.setUserName(matchConfigRequest.getChallengedUserName());
+        challengedUser.setSubject(matchConfigRequest.getChallengedUserSubject());
+        challengedUser.setName(matchConfigRequest.getChallengedUserName());
 
-        matchState.setUserMatchStateList(List.of(initiator, challengedUser));
+        matchState.setInitiatorUserMatchState(initiator);
+        matchState.setChallengedUserMatchState(challengedUser);
 
         storeInRedis(matchState);
+
+        // Notify challenged user of match request
+        matchRequestService.notifyUserOfMatchRequest(challengedUser.getSubject(), initiator.getName(), matchState.getMatchId());
 
         return matchId;
     }
