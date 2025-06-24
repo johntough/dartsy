@@ -1,23 +1,23 @@
 package com.tough.dartsapp.model;
 
 public class ScoreEntry {
-    private String userId;
+    private String userSubject;
     private int roundIndex;
     private int roundScore;
 
     public ScoreEntry() {}
 
-    public ScoreEntry(String userId, int score) {
-        this.userId = userId;
+    public ScoreEntry(String userSubject, int score) {
+        this.userSubject = userSubject;
         this.roundScore = score;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserSubject() {
+        return userSubject;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserSubject(String userSubject) {
+        this.userSubject = userSubject;
     }
 
     public int getRoundIndex() {

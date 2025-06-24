@@ -29,9 +29,9 @@ public class MatchState {
         this.userMatchStateList = userMatchStateList;
     }
 
-    public UserMatchState findUserMatchStateByUserId(String id) {
+    public UserMatchState findUserMatchStateByUserSubject(String subject) {
         for (UserMatchState userMatchState : userMatchStateList) {
-            if (userMatchState.getUserId().equals(id)) {
+            if (userMatchState.getUserSubject().equals(subject)) {
                 return userMatchState;
             }
         }

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import '../styles/button.css';
 
-const GoogleAuthButton = ({ setUserId, setUserName }) => {
+const GoogleAuthButton = ({ setUserSubject, setUserName }) => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -22,8 +22,10 @@ const GoogleAuthButton = ({ setUserId, setUserName }) => {
                 return response.json();
             }).then(json => {
                 setIsAuthenticated(true);
-                setUserId(json.idpSubject);
+                setUserSubject(json.idpSubject);
                 setUserName(json.name);
+                // clear matchId in case a stale matchId is hanging around from previous login
+                localStorage.removeItem('matchId');
         })
             .catch(() => {
                 setIsAuthenticated(false);
@@ -53,7 +55,7 @@ const GoogleAuthButton = ({ setUserId, setUserName }) => {
     };
 
     const clearUserInfo = () => {
-        setUserId(null);
+        setUserSubject(null);
         setUserName(null);
     }
 

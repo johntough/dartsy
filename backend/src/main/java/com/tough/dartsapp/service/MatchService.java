@@ -10,9 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class MatchService {
@@ -32,11 +30,17 @@ public class MatchService {
 
         MatchState matchState = new MatchState();
         matchState.setMatchId(matchId);
-        matchState.setMatchStatus(MatchStatus.IN_PROGRESS);
+        matchState.setMatchStatus(MatchStatus.REQUESTED);
 
-        UserMatchState userMatchState = new UserMatchState();
-        userMatchState.setUserId(matchConfigRequest.getUserId());
-        matchState.setUserMatchStateList(List.of(userMatchState));
+        UserMatchState initiator = new UserMatchState();
+        initiator.setUserSubject(matchConfigRequest.getInitiatorUserSubject());
+        initiator.setUserName(matchConfigRequest.getInitiatorUserName());
+
+        UserMatchState challengedUser = new UserMatchState();
+        challengedUser.setUserSubject(matchConfigRequest.getChallengedUserSubject());
+        challengedUser.setUserName(matchConfigRequest.getChallengedUserName());
+
+        matchState.setUserMatchStateList(List.of(initiator, challengedUser));
 
         storeInRedis(matchState);
 

@@ -4,28 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserMatchState {
-    private String userId;
-    private String playerName;
+    private String userSubject;
+    private String userName;
     private int highestCheckout;
     private int bestLeg;
     private int oneHundredAndEightyCount;
     private int legsWon;
     private List<ScoreEntry> scores = new ArrayList<>();
 
-    public String getUserId() {
-        return userId;
+    public String getUserSubject() {
+        return userSubject;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserSubject(String userSubject) {
+        this.userSubject = userSubject;
     }
 
-    public String getPlayerName() {
-        return playerName;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setPlayerName(String playerName) {
-        this.playerName = playerName;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public int getHighestCheckout() {

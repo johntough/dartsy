@@ -27,7 +27,7 @@ public class MatchController {
 
     @PostMapping("match/configure")
     public ResponseEntity<String> configureMatch(@RequestBody MatchConfigRequest matchConfigRequest) {
-        LOGGER.info("POST match/configure called for user {}", matchConfigRequest.getUserId());
+        LOGGER.info("POST match/configure called by user {} to challenge user {}", matchConfigRequest.getInitiatorUserName(), matchConfigRequest.getChallengedUserName());
         String matchId = matchService.configureMatch(matchConfigRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(matchId);
     }

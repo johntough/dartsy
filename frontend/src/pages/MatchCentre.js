@@ -3,10 +3,9 @@ import {Client} from '@stomp/stompjs';
 import { toast } from 'react-toastify';
 import SockJS from 'sockjs-client';
 
-const MatchCentre = ({ userId, userName }) => {
-    const [matchId, setMatchId] = useState('');
-    const [activeMatches, setActiveMatches] = useState([]);
-    const [selectedMatchId, setSelectedMatchId] = useState('');
+const MatchCentre = ({ userSubject, userName, matchId, setMatchId }) => {
+    // const [activeMatches, setActiveMatches] = useState([]);
+    // const [selectedMatchId, setSelectedMatchId] = useState('');
     const [scoreInput, setScoreInput] = useState('');
     const [scores, setScores] = useState([]);
     const stompClient = useRef(null);
@@ -73,73 +72,37 @@ const MatchCentre = ({ userId, userName }) => {
         }
     }, [matchId]);
 
-    // TODO: You should only be able to do this if you don't have an active match. i.e. you need to finish or terminate your active match (if there is one)
-    const configureMatch = () => {
+    // const getActiveMatches = () => {
+    //     fetch(`http://localhost:8080/matches/active`,{
+    //         method: 'GET',
+    //         credentials: 'include'
+    //     })
+    //         .then((response) => {
+    //             if (response.status === 401) {
+    //                 throw new Error("Unauthorized");
+    //             }
+    //
+    //             if (!response.ok) {
+    //                 throw new Error("Something went wrong.");
+    //             }
+    //
+    //             return response.json();
+    //         })
+    //         .then(data => {
+    //             setActiveMatches(data);
+    //         })
+    //         .catch(error => {
+    //             toast.error(error.message);
+    //             console.error('Error getting active matches');
+    //         });
+    // };
 
-        const matchConfig = {
-            userId: userId
-        };
-
-        fetch(`http://localhost:8080/match/configure`,{
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify(matchConfig)
-        })
-            .then((response) => {
-                if (response.status === 401) {
-                    throw new Error("Unauthorized");
-                }
-
-                if (!response.ok) {
-                    throw new Error("Something went wrong.");
-                }
-
-                return response.text();
-            })
-            .then((matchId) => {
-                setMatchId(matchId);
-                localStorage.setItem('matchId', matchId);
-            })
-            .catch(error => {
-                toast.error(error.message);
-                console.error('Error configuring match');
-            });
-    };
-
-    const getActiveMatches = () => {
-        fetch(`http://localhost:8080/matches/active`,{
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then((response) => {
-                if (response.status === 401) {
-                    throw new Error("Unauthorized");
-                }
-
-                if (!response.ok) {
-                    throw new Error("Something went wrong.");
-                }
-
-                return response.json();
-            })
-            .then(data => {
-                setActiveMatches(data);
-            })
-            .catch(error => {
-                toast.error(error.message);
-                console.error('Error getting active matches');
-            });
-    };
-
-    const updateSelectedMatch = (id) => {
-        setSelectedMatchId(id);
-        setMatchId(id);
-        localStorage.setItem('matchId', id);
-    }
-
+    // const updateSelectedMatch = (id) => {
+    //     setSelectedMatchId(id);
+    //     setMatchId(id);
+    //     localStorage.setItem('matchId', id);
+    // }
+    //
     const subscribeToMatch = (id) => {
         // Unsubscribe previous if any
         if (subscription.current) {
@@ -169,7 +132,7 @@ const MatchCentre = ({ userId, userName }) => {
         if (stompClient.current && stompClient.current.connected) {
             stompClient.current.publish({
                 destination: `/app/match/${matchId}/score`,
-                body: JSON.stringify({ userId: userId, roundScore: scoreInput }),
+                body: JSON.stringify({ userSubject: userSubject, roundScore: scoreInput }),
             });
             setScoreInput(''); // clear input after sending
         } else {
@@ -179,30 +142,6 @@ const MatchCentre = ({ userId, userName }) => {
 
     return (
         <div>
-            <div>
-                {userId ? (
-                    <p>Welcome, {userName}! Your ID is {userId}.</p>
-                ) : (
-                    <p>Please log in.</p>
-                )}
-            </div>
-            <button className="button" onClick={configureMatch}>Configure Match</button>
-            <p>Match ID: {matchId || 'Not configured'}</p>
-           <div>
-               <select
-                   className="match-search-select"
-                   value={selectedMatchId}
-                   onChange={(e) => updateSelectedMatch(e.target.value)}
-               >
-                   <option value="">-- Select a Match --</option>
-                   {activeMatches.map(matchId => (
-                       <option key={matchId} value={matchId}>
-                           {matchId}
-                       </option>
-                   ))}
-               </select>
-               <button className="button" onClick={getActiveMatches}>Search for active matches</button>
-           </div>
             <div>
                 <input
                     className="score-input"

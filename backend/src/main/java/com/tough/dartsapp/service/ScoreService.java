@@ -46,11 +46,11 @@ public class ScoreService {
 
     private void updateMatchState(MatchState matchState, ScoreEntry score) {
 
-        UserMatchState player = matchState.findUserMatchStateByUserId(score.getUserId());
+        UserMatchState player = matchState.findUserMatchStateByUserSubject(score.getUserSubject());
 
         if (player == null) {
             // TODO: handle exception correctly: return 404?
-            throw new IllegalArgumentException("User not found with ID: " + score.getUserId());
+            throw new IllegalArgumentException("User not found with ID: " + score.getUserSubject());
         }
 
         // using 1-based indexing as that's how the game of darts works (i.e. you don't have a zero throw)
