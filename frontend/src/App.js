@@ -21,7 +21,7 @@ function App() {
           <GoogleAuthButton setUserSubject={setUserSubject} setUserName={setUserName} isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated}/>
             <div>
                 {userSubject ? (
-                    <p>Welcome, {userName}! Your ID is {userSubject}.</p>
+                    <p>Welcome, {userName}!</p>
                 ) : (
                     <p>Please log in.</p>
                 )}

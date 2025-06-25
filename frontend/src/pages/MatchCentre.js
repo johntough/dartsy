@@ -6,6 +6,8 @@ import '../styles/scoreboard.css';
 
 const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initiatorScores, setInitiatorScores, challengedUserScores, setChallengedUserScores }) => {
     const [scoreInput, setScoreInput] = useState('');
+    const [initiatorUserName, setInitiatorUserName] = useState('');
+    const [challengedUserName, setChallengedUserName] = useState('');
 
     const { connect, subscribeToMatch, sendScore } = useWebSocket({
         onMatchUpdate: (matchState) => {
@@ -37,6 +39,9 @@ const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initia
                 .then((matchState) => {
                     setInitiatorScores(matchState.initiatorUserMatchState.scores);
                     setChallengedUserScores(matchState.challengedUserMatchState.scores);
+                    // TODO: this should be set once match is accepted and not on every score update
+                    setInitiatorUserName(matchState.initiatorUserMatchState.name)
+                    setChallengedUserName(matchState.challengedUserMatchState.name)
                     setMatchId(matchState.matchId)
                     subscribeToMatch(matchState.matchId);
                 })
@@ -81,61 +86,85 @@ const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initia
                 <button className="button" onClick={handleSubmitScore}>Submit Score</button>
             </div>
             <div style={{ display: 'flex', gap: '20px' }}>
-                {initiatorScores.length > 0 && (
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Score</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {initiatorScores.map((score) => (
-                            <tr key={score.roundIndex}>
-                              <td>{score.roundIndex}</td>
-                              <td className={score.roundScore >= 100 ? 'ton-plus-score' : ''}>
-                                  {score.roundScore}</td>
-                            </tr>
-                        ))}
-                        <tr>
-                            <td><strong>Remaining</strong></td>
-                            <td>
-                                <strong>
-                                    {501 - initiatorScores.reduce((sum, score) => sum + score.roundScore, 0)}
-                                </strong>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                )}
+                {initiatorScores.length > 0 || challengedUserScores.length > 0 ? (() => {
+                        const playedRoundIndices = new Set([
+                            ...initiatorScores.map(s => s.roundIndex),
+                            ...challengedUserScores.map(s => s.roundIndex)
+                        ]);
 
-                {challengedUserScores.length > 0 && (
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Score</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {challengedUserScores.map((score) => (
-                            <tr key={score.roundIndex}>
-                                <td>{score.roundIndex}</td>
-                                <td className={score.roundScore >= 100 ? 'ton-plus-score' : ''}>
-                                    {score.roundScore}</td>
-                            </tr>
-                        ))}
-                        <tr>
-                            <td><strong>Remaining</strong></td>
-                            <td>
-                                <strong>
-                                    {501 - challengedUserScores.reduce((sum, score) => sum + score.roundScore, 0)}
-                                </strong>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                )}
+                        const initiatorMap = Object.fromEntries(
+                            initiatorScores.map(score => [score.roundIndex, score])
+                        );
+                        const challengedMap = Object.fromEntries(
+                            challengedUserScores.map(score => [score.roundIndex, score])
+                        );
+
+
+                        const maxPlayedRoundIndex = Math.max(...playedRoundIndices);
+                        // +1 as the array is 1-based
+                        const rounds = Array.from({ length: maxPlayedRoundIndex }, (_, i) => i + 1);
+
+                        const initiatorRemaining = 501 - initiatorScores.reduce((sum, s) => sum + s.roundScore, 0);
+                        const challengedRemaining = 501 - challengedUserScores.reduce((sum, s) => sum + s.roundScore, 0);
+
+                    return (
+                        <>
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>{initiatorUserName}</th>
+                                </tr>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Score</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {rounds.map(i => (
+                                    <tr key={i}>
+                                        <td>{i}</td>
+                                        <td className={initiatorMap[i]?.roundScore >= 100 ? 'ton-plus-score' : ''}>
+                                            {initiatorMap[i]?.roundScore ?? '-'}
+                                        </td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td><strong>Remaining</strong></td>
+                                    <td><strong>{initiatorRemaining}</strong></td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>{challengedUserName}</th>
+                                </tr>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Score</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {rounds.map(i => (
+                                    <tr key={i}>
+                                        <td>{i}</td>
+                                        <td className={challengedMap[i]?.roundScore >= 100 ? 'ton-plus-score' : ''}>
+                                            {challengedMap[i]?.roundScore ?? '-'}
+                                        </td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td><strong>Remaining</strong></td>
+                                    <td><strong>{challengedRemaining}</strong></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </>
+                    );
+                })() : null}
             </div>
             <div>
                 {isAuthenticated && userSubject && <MatchNotification userSubject={userSubject} setMatchId={setMatchId}
