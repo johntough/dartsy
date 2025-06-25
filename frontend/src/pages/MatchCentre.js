@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import useWebSocket from '../hooks/useWebSocket';
 import MatchNotification from "../components/MatchNotification";
+import '../styles/scoreboard.css';
 
 const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initiatorScores, setInitiatorScores, challengedUserScores, setChallengedUserScores }) => {
     const [scoreInput, setScoreInput] = useState('');
@@ -92,9 +93,18 @@ const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initia
                         {initiatorScores.map((score) => (
                             <tr key={score.roundIndex}>
                               <td>{score.roundIndex}</td>
-                              <td>{score.roundScore}</td>
+                              <td className={score.roundScore >= 100 ? 'ton-plus-score' : ''}>
+                                  {score.roundScore}</td>
                             </tr>
                         ))}
+                        <tr>
+                            <td><strong>Remaining</strong></td>
+                            <td>
+                                <strong>
+                                    {501 - initiatorScores.reduce((sum, score) => sum + score.roundScore, 0)}
+                                </strong>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 )}
@@ -111,9 +121,18 @@ const MatchCentre = ({ isAuthenticated, userSubject, matchId, setMatchId, initia
                         {challengedUserScores.map((score) => (
                             <tr key={score.roundIndex}>
                                 <td>{score.roundIndex}</td>
-                                <td>{score.roundScore}</td>
+                                <td className={score.roundScore >= 100 ? 'ton-plus-score' : ''}>
+                                    {score.roundScore}</td>
                             </tr>
                         ))}
+                        <tr>
+                            <td><strong>Remaining</strong></td>
+                            <td>
+                                <strong>
+                                    {501 - challengedUserScores.reduce((sum, score) => sum + score.roundScore, 0)}
+                                </strong>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 )}
