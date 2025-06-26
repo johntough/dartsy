@@ -3,7 +3,7 @@ import { ToastContainer } from 'react-toastify';
 import GoogleAuthButton from "./components/GoogleAuthButton";
 import MatchConfiguration from "./pages/MatchConfiguration";
 import MatchCentre from './pages/MatchCentre';
-import './App.css';
+import './styles/App.css';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
@@ -16,21 +16,35 @@ function App() {
     const [challengedUserScores, setChallengedUserScores] = useState([]);
 
     return (
-      <div className="App">
-        <header className="App-header">
-          <GoogleAuthButton setUserSubject={setUserSubject} setUserName={setUserName} isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated}/>
-            <div>
-                {userSubject ? (
-                    <p>Welcome, {userName}!</p>
-                ) : (
-                    <p>Please log in.</p>
-                )}
-            </div>
-          <MatchConfiguration userSubject={userSubject} userName={userName} matchId={matchId} setMatchId={setMatchId}/>
-          <MatchCentre isAuthenticated={isAuthenticated} userSubject={userSubject} matchId={matchId} setMatchId={setMatchId} initiatorScores={initiatorScores} setInitiatorScores={setInitiatorScores} challengedUserScores={challengedUserScores} setChallengedUserScores={setChallengedUserScores}/>
-        </header>
+      <div className="app">
+          <header className="app-header">
+              <div> {userSubject && <p>Welcome, {userName}!</p>} </div>
+              <GoogleAuthButton
+                  setUserSubject={setUserSubject}
+                  setUserName={setUserName}
+                  isAuthenticated={isAuthenticated}
+                  setIsAuthenticated={setIsAuthenticated}
+              />
+          </header>
+          <div className="app-content">
+              <MatchConfiguration
+                  userSubject={userSubject}
+                  userName={userName}
+                  matchId={matchId}
+                  setMatchId={setMatchId}
+              />
+              <MatchCentre
+                  isAuthenticated={isAuthenticated}
+                  userSubject={userSubject}
+                  matchId={matchId}
+                  setMatchId={setMatchId}
+                  initiatorScores={initiatorScores}
+                  setInitiatorScores={setInitiatorScores}
+                  challengedUserScores={challengedUserScores} s
+                  etChallengedUserScores={setChallengedUserScores}
+              />
+          </div>
           <ToastContainer />
-
       </div>
     );
 }
