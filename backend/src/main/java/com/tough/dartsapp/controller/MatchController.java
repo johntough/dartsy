@@ -32,6 +32,13 @@ public class MatchController {
         return ResponseEntity.status(HttpStatus.CREATED).body(matchId);
     }
 
+    @PostMapping("match/local/configure")
+    public ResponseEntity<String> configureLocalMatch(@RequestBody MatchConfigRequest matchConfigRequest) {
+        LOGGER.info("POST match/local/configure called by user {} ", matchConfigRequest.getInitiatorUserName());
+        String matchId = matchService.configureLocalMatch(matchConfigRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(matchId);
+    }
+
     @GetMapping("match/restore/{matchId}")
     public ResponseEntity<MatchState> restoreMatch(@PathVariable String matchId) {
         LOGGER.info("GET match/restore/{} called", matchId);

@@ -159,23 +159,11 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
                     <Input 
                       ref={player1Ref}
                       id="player1Name"
-                      value={player1Name} 
-                      onChange={() => {}}
-                      onFocus={() => handleInputFocus('player1Name')}
+                      value={player1Name}
+                      disabled
                       inputMode="none" 
                       className="pr-10 h-14 text-2xl"
                     />
-                    {player1Name && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10"
-                        onClick={() => setPlayer1Name('')}
-                        aria-label="Clear player 1 name"
-                      >
-                        <X className="h-6 w-6" />
-                      </Button>
-                    )}
                   </div>
                 </div>
                 <div className="space-y-2">

@@ -1,9 +1,6 @@
 package com.tough.dartsapp.service;
 
-import com.tough.dartsapp.model.MatchConfigRequest;
-import com.tough.dartsapp.model.MatchState;
-import com.tough.dartsapp.model.MatchStatus;
-import com.tough.dartsapp.model.UserMatchState;
+import com.tough.dartsapp.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,21 +30,36 @@ public class MatchService {
         matchState.setMatchId(matchId);
         matchState.setMatchStatus(MatchStatus.REQUESTED);
 
-        UserMatchState initiator = new UserMatchState();
-        initiator.setSubject(matchConfigRequest.getInitiatorUserSubject());
-        initiator.setName(matchConfigRequest.getInitiatorUserName());
-
-        UserMatchState challengedUser = new UserMatchState();
-        challengedUser.setSubject(matchConfigRequest.getChallengedUserSubject());
-        challengedUser.setName(matchConfigRequest.getChallengedUserName());
-
-        matchState.setInitiatorUserMatchState(initiator);
-        matchState.setChallengedUserMatchState(challengedUser);
+        setupUserState(matchState, matchConfigRequest);
 
         storeInRedis(matchState);
 
         // Notify challenged user of match request
-        matchRequestService.notifyUserOfMatchRequest(challengedUser.getSubject(), initiator.getName(), matchState.getMatchId());
+        matchRequestService.notifyUserOfMatchRequest(
+                matchState.getChallengedUserMatchState().getSubject(),
+                matchState.getInitiatorUserMatchState().getName(),
+                matchState.getMatchId()
+        );
+
+        return matchId;
+    }
+
+    public String configureLocalMatch(MatchConfigRequest matchConfigRequest) {
+
+        String matchId = UUID.randomUUID().toString();
+
+        MatchState matchState = new MatchState();
+        matchState.setMatchId(matchId);
+        matchState.setMatchStatus(MatchStatus.IN_PROGRESS);
+        matchState.setGameMode(GameMode.LOCAL);
+        matchState.setInitialStartingScore(matchConfigRequest.getInitialStartingScore());
+        matchState.setTotalLegs(matchConfigRequest.getTotalLegs());
+        matchState.setCurrentLegStarterPlayerSubject(matchConfigRequest.getCurrentLegStarterPlayerSubject());
+        matchState.setCurrentTurnPlayerSubject(matchConfigRequest.getCurrentTurnPlayerSubject());
+
+        setupUserState(matchState, matchConfigRequest);
+
+        storeInRedis(matchState);
 
         return matchId;
     }
@@ -87,5 +99,20 @@ public class MatchService {
         String key = "match:" + matchState.getMatchId();
         redisTemplate.opsForValue().set(key, matchState);
         LOGGER.info("New Match stored in Redis with key: {}", key);
+    }
+
+    private void setupUserState(MatchState matchState, MatchConfigRequest matchConfigRequest) {
+        UserMatchState initiator = new UserMatchState();
+        initiator.setSubject(matchConfigRequest.getInitiatorUserSubject());
+        initiator.setName(matchConfigRequest.getInitiatorUserName());
+        initiator.setPlayerLocation(matchConfigRequest.getInitiatorUserLocation());
+
+        UserMatchState challengedUser = new UserMatchState();
+        challengedUser.setSubject(matchConfigRequest.getChallengedUserSubject());
+        challengedUser.setName(matchConfigRequest.getChallengedUserName());
+        challengedUser.setPlayerLocation(matchConfigRequest.getChallengedUserLocation());
+
+        matchState.setInitiatorUserMatchState(initiator);
+        matchState.setChallengedUserMatchState(challengedUser);
     }
 }

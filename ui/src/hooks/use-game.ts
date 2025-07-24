@@ -8,7 +8,7 @@ import {
   type AdjustDifficultyInput,
 } from "@/ai/flows/ai-opponent-difficulty-tuning";
 import { CHECKOUT_DATA } from "@/lib/checkout-data";
-import type { MatchData, UserMatchState, RoundScore, GameMode as BackendGameMode } from "@/lib/types";
+import type {MatchData, UserMatchState, RoundScore, GameMode as BackendGameMode, MatchConfigRequest} from "@/lib/types";
 
 export type Player = "player1" | "player2";
 export type GameMode = "2p" | "ai" | "remote";
@@ -149,24 +149,57 @@ const saveProfileToBackend = async (profile: PlayerProfile): Promise<void> => {
  */
 const saveMatchStateToBackend = async (state: MatchData): Promise<void> => {
   console.log("Saving match state to backend:", state);
-  // In a real app, you would make an API call here.
-  // e.g., await fetch('/api/match-state', { method: 'POST', body: JSON.stringify(state) });
-  await new Promise(resolve => setTimeout(resolve, 300));
-  console.log("Match state saved.");
+
+  try {
+      const response = await fetch(`http://localhost:8080/match/local/${state.matchId}/updateState`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(state)
+      });
+
+      if (response.status === 401) {
+          throw new Error("Unauthorized");
+      }
+
+      if (!response.ok) {
+          throw new Error("Something went wrong.");
+      }
+
+      console.log("Match state saved.");
+    } catch (error) {
+      console.error("Failed to save match state:", error);
+      throw error; // rethrow if you want the caller to handle it
+    }
 }
 
-/**
- * Fetches the current match state from the backend.
- * @returns A promise that resolves with the match data, or null if no active match.
- */
 const fetchMatchStateFromBackend = async (): Promise<MatchData | null> => {
     console.log("Attempting to fetch match state from backend...");
-    // In a real app, you'd fetch from your API.
-    // For now, return null to simulate no active game on refresh.
-    // To test restoration, you can build and return a dummy MatchData object here.
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log("No active match found on backend.");
-    return null;
+
+    const localStorageMatchId = localStorage.getItem("matchId");
+    if (!localStorageMatchId) return null;
+
+    try {
+        const response = await fetch(`http://localhost:8080/match/restore/${localStorageMatchId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            throw new Error("Unauthorized");
+        }
+
+        if (!response.ok) {
+            throw new Error("Something went wrong.");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error restoring match', error);
+        return null;
+    }
 }
 
 
@@ -294,8 +327,8 @@ export function useGame() {
     return { player1: p1Score, player2: p2Score };
   }, [matchData]);
   
-  const currentPlayer = useMemo(() => matchData?.currentPlayerTurn === "user1_subject" ? "player1" : "player2", [matchData]);
-  const legStarter = useMemo(() => matchData?.currentLegStarter === "user1_subject" ? "player1" : "player2", [matchData]);
+  const currentPlayer = useMemo(() => matchData?.currentTurnPlayerSubject === "user1_subject" ? "player1" : "player2", [matchData]);
+  const legStarter = useMemo(() => matchData?.currentLegStarterPlayerSubject === "user1_subject" ? "player1" : "player2", [matchData]);
 
   const stats = useMemo(() => {
     if (!matchData) return INITIAL_STATS;
@@ -380,44 +413,97 @@ export function useGame() {
         return 'REMOTE';
     }
 
-    const newMatchData: MatchData = {
-        matchId: `match-${Date.now()}`,
-        matchStatus: 'IN_PROGRESS',
-        gameMode: mapGameModeToBackend(config.gameMode),
-        aiLevel: config.gameMode === 'ai' ? AI_LEVEL_SETTINGS[config.aiLevel].level : undefined,
-        initialStartingScore: config.initialScore,
-        totalLegs: config.legs,
-        currentLegStarter: 'user1_subject',
-        currentPlayerTurn: 'user1_subject',
-        initiatorUserMatchState: {
-            subject: 'user1_subject',
-            name: profile.name,
-            location: profile.location,
-            highestCheckout: 0,
-            bestLeg: Infinity,
-            oneHundredAndEightyCount: 0,
-            oneHundredAndFortyCount: 0,
-            oneHundredCount: 0,
-            legsWon: 0,
-            totalMatchScore: 0,
-            totalMatchDartsThrown: 0,
-            scores: []
-        },
-        challengedUserMatchState: {
-            subject: 'user2_subject',
-            name: config.gameMode === 'ai' ? 'AI Opponent' : config.player2Name,
-            location: 'none',
-            highestCheckout: 0,
-            bestLeg: Infinity,
-            oneHundredAndEightyCount: 0,
-            oneHundredAndFortyCount: 0,
-            oneHundredCount: 0,
-            legsWon: 0,
-            totalMatchScore: 0,
-            totalMatchDartsThrown: 0,
-            scores: []
+      const newMatchData: MatchData = {
+          matchId: `match-${Date.now()}`,
+          matchStatus: 'IN_PROGRESS',
+          gameMode: mapGameModeToBackend(config.gameMode),
+          aiLevel: config.gameMode === 'ai' ? AI_LEVEL_SETTINGS[config.aiLevel].level : undefined,
+          initialStartingScore: config.initialScore,
+          totalLegs: config.legs,
+          currentLegStarterPlayerSubject: 'user1_subject',
+          currentTurnPlayerSubject: 'user1_subject',
+          initiatorUserMatchState: {
+              subject: profile.idpSubject,
+              name: profile.name,
+              location: profile.location,
+              highestCheckout: 0,
+              bestLeg: Infinity,
+              oneHundredAndEightyCount: 0,
+              oneHundredAndFortyCount: 0,
+              oneHundredCount: 0,
+              legsWon: 0,
+              totalMatchScore: 0,
+              totalMatchDartsThrown: 0,
+              scores: []
+          },
+          challengedUserMatchState: {
+              subject: 'user2_subject',
+              name: config.gameMode === 'ai' ? 'AI Opponent' : config.player2Name,
+              location: 'none',
+              highestCheckout: 0,
+              bestLeg: Infinity,
+              oneHundredAndEightyCount: 0,
+              oneHundredAndFortyCount: 0,
+              oneHundredCount: 0,
+              legsWon: 0,
+              totalMatchScore: 0,
+              totalMatchDartsThrown: 0,
+              scores: []
+          }
+      };
+
+    switch (mapGameModeToBackend(config.gameMode)) {
+        case 'LOCAL': {
+            const newLocalMatchConfigRequest: MatchConfigRequest = {
+                initiatorUserSubject: profile.idpSubject,
+                initiatorUserName: profile.name,
+                initiatorUserLocation: profile.location,
+                challengedUserSubject: config.player2Name,
+                challengedUserName: config.player2Name,
+                challengedUserLocation: "",
+                gameMode: "LOCAL",
+                initialStartingScore: config.initialScore,
+                totalLegs: config.legs,
+                currentLegStarterPlayerSubject: 'user1_subject',
+                currentTurnPlayerSubject: 'user1_subject'
+            }
+
+            fetch(`http://localhost:8080/match/local/configure`,{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(newLocalMatchConfigRequest)
+            })
+                .then((response) => {
+                    if (response.status === 401) {
+                        throw new Error("Unauthorized");
+                    }
+
+                    if (!response.ok) {
+                        throw new Error("Something went wrong.");
+                    }
+
+                    return response.text();
+                })
+                .then((matchId) => {
+                    newMatchData.matchId = matchId;
+                    localStorage.setItem('matchId', matchId);
+                })
+                .catch(error => {
+                    console.error('Error configuring match');
+                });
+            break;
         }
-    };
+        case 'REMOTE': {
+            break;
+        }
+        case 'AI': {
+            break;
+        }
+    }
+
     setMatchData(newMatchData);
     setIsGameStarted(true);
   };
@@ -425,15 +511,11 @@ export function useGame() {
   const startNewLeg = useCallback(() => {
     if (!matchData) return;
     if (matchWinner) return;
-
-    const nextLegStarterSubject = matchData.currentLegStarter === 'user1_subject' ? 'user2_subject' : 'user1_subject';
     
     setMatchData(prev => {
         if (!prev) return null;
         return {
             ...prev,
-            currentLegStarter: nextLegStarterSubject,
-            currentPlayerTurn: nextLegStarterSubject,
             initiatorUserMatchState: { ...prev.initiatorUserMatchState, scores: [] },
             challengedUserMatchState: { ...prev.challengedUserMatchState, scores: [] }
         };
@@ -473,7 +555,6 @@ export function useGame() {
         if (checkoutScore > newPlayerState.highestCheckout) {
             newPlayerState.highestCheckout = checkoutScore;
         }
-        newPlayerState.legsWon += 1;
 
         newMatchData[winningPlayerStateKey] = newPlayerState;
         
@@ -482,6 +563,7 @@ export function useGame() {
           newMatchData.matchStatus = 'COMPLETED';
           setMatchWinner(winningPlayer);
           setIsMatchWinnerDialogOpen(true);
+          localStorage.removeItem('matchId');
         } else {
           setIsLegWon(true);
         }
@@ -500,6 +582,12 @@ export function useGame() {
       const newMatchData = { ...matchData };
       const playerState = { ...newMatchData[playerStateKey] };
 
+      // TODO :check this si correct
+      const nextLegStarterSubject = matchData.currentLegStarterPlayerSubject === 'user1_subject' ? 'user2_subject' : 'user1_subject';
+      newMatchData.currentLegStarterPlayerSubject = nextLegStarterSubject;
+      newMatchData.currentTurnPlayerSubject = nextLegStarterSubject;
+
+      playerState.legsWon += 1;
       playerState.totalMatchDartsThrown += darts;
       playerState.totalMatchScore += score;
       playerState.scores.push({
@@ -568,7 +656,7 @@ export function useGame() {
         variant: "destructive",
       });
       playerState.scores.push({ roundScore: 0, roundIndex, winningScore: false, userSubject: playerState.subject });
-      newMatchData.currentPlayerTurn = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
+      newMatchData.currentTurnPlayerSubject = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
     } else if (newScore === 0) {
       const possibleCheckout = currentScore <= 170 && !BOGEY_NUMBERS.includes(currentScore);
       if (possibleCheckout) {
@@ -584,12 +672,12 @@ export function useGame() {
           variant: "destructive",
         });
         playerState.scores.push({ roundScore: 0, roundIndex, winningScore: false, userSubject: playerState.subject });
-        newMatchData.currentPlayerTurn = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
+        newMatchData.currentTurnPlayerSubject = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
       }
     } else {
       playerState.totalMatchScore += score;
       playerState.scores.push({ roundScore: score, roundIndex, winningScore: false, userSubject: playerState.subject });
-      newMatchData.currentPlayerTurn = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
+      newMatchData.currentTurnPlayerSubject = currentPlayer === 'player1' ? 'user2_subject' : 'user1_subject';
     }
 
     newMatchData[playerStateKey] = playerState;
@@ -735,7 +823,7 @@ export function useGame() {
       playerState.oneHundredCount += (scoreToThrow >= 100 && scoreToThrow < 140) ? 1 : 0;
 
       newMatchData.challengedUserMatchState = playerState;
-      newMatchData.currentPlayerTurn = 'user1_subject';
+      newMatchData.currentTurnPlayerSubject = 'user1_subject';
       setMatchData(newMatchData);
       
       await runDifficultyAdjustment();

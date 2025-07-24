@@ -32,8 +32,23 @@ export interface MatchData {
   aiLevel?: AiLevel;
   initialStartingScore: number;
   totalLegs: number;
-  currentLegStarter: string;
-  currentPlayerTurn: string;
+  currentLegStarterPlayerSubject: string;
+  currentTurnPlayerSubject: string;
   initiatorUserMatchState: UserMatchState;
   challengedUserMatchState: UserMatchState;
+}
+
+export interface MatchConfigRequest {
+  initiatorUserSubject: string;
+  initiatorUserName: string;
+  initiatorUserLocation: string;
+  challengedUserSubject: string;
+  challengedUserName: string;
+  challengedUserLocation: string;
+  gameMode: GameMode;
+  AILevel?: AiLevel,
+  initialStartingScore: number,
+  totalLegs: number;
+  currentLegStarterPlayerSubject: string;
+  currentTurnPlayerSubject: string;
 }

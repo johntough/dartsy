@@ -3,9 +3,13 @@ package com.tough.dartsapp.model;
 public class MatchState {
     private String matchId;
     private MatchStatus matchStatus;
+    private GameMode gameMode;
+    private int initialStartingScore;
+    private int totalLegs;
+    private String currentLegStarterPlayerSubject;
+    private String currentTurnPlayerSubject;
     private UserMatchState initiatorUserMatchState;
     private UserMatchState challengedUserMatchState;
-
 
     public String getMatchId() {
         return matchId;
@@ -19,6 +23,46 @@ public class MatchState {
     }
     public void setMatchStatus(MatchStatus matchStatus) {
         this.matchStatus = matchStatus;
+    }
+
+    public GameMode getGameMode() {
+        return  gameMode;
+    }
+
+    public void setGameMode(GameMode gameMode) {
+        this.gameMode = gameMode;
+    }
+
+    public int getInitialStartingScore() {
+        return initialStartingScore;
+    }
+
+    public void setInitialStartingScore(int initialStartingScore) {
+        this.initialStartingScore = initialStartingScore;
+    }
+
+    public int getTotalLegs() {
+        return totalLegs;
+    }
+
+    public void setTotalLegs(int totalLegs) {
+        this.totalLegs = totalLegs;
+    }
+
+    public String getCurrentLegStarterPlayerSubject() {
+        return currentLegStarterPlayerSubject;
+    }
+
+    public void setCurrentLegStarterPlayerSubject(String currentLegStarterPlayerSubject) {
+        this.currentLegStarterPlayerSubject = currentLegStarterPlayerSubject;
+    }
+
+    public String getCurrentTurnPlayerSubject() {
+        return currentTurnPlayerSubject;
+    }
+
+    public void setCurrentTurnPlayerSubject(String currentTurnPlayerSubject) {
+        this.currentTurnPlayerSubject = currentTurnPlayerSubject;
     }
 
     public UserMatchState getInitiatorUserMatchState() {
