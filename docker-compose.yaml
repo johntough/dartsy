@@ -26,12 +26,21 @@ services:
     networks:
       - app-network
 
-  frontend:
+#  frontend:
+#    build:
+#      context: ./frontend
+#      dockerfile: Dockerfile
+#    ports:
+#      - "3000:80"
+#    networks:
+#      - app-network
+
+  ui:
     build:
-      context: ./frontend
+      context: ./ui
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
     networks:
       - app-network
 
