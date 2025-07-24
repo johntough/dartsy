@@ -4,7 +4,7 @@ FROM openjdk:21-jdk
 RUN groupadd -g 1234 customgroup && \
     useradd -m -u 1234 -g customgroup customuser
 
-RUN mkdir -p /data && chown customuser:customgroup /data
+RUN mkdir -p /data && chmod 777 /data && chown customuser:customgroup /data
 
 # Switch to the custom user
 USER customuser
