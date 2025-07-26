@@ -542,7 +542,7 @@ export function useGame() {
 
       setMatchData(prev => {
         if (!prev) return null;
-        
+
         let newMatchData = { ...prev };
         const winningPlayerStateKey = winningPlayer === 'player1' ? 'initiatorUserMatchState' : 'challengedUserMatchState';
         
@@ -567,6 +567,9 @@ export function useGame() {
         } else {
           setIsLegWon(true);
         }
+
+        queueMicrotask(() => saveMatchStateToBackend(newMatchData));
+
         return newMatchData;
       });
 
@@ -602,7 +605,7 @@ export function useGame() {
       
       finalizeWinner(player, score, dartsThrownInLeg);
       
-      saveMatchStateToBackend(newMatchData);
+      //saveMatchStateToBackend(newMatchData);
     }
     setIsCheckoutPending(false);
     setPendingCheckout(null);

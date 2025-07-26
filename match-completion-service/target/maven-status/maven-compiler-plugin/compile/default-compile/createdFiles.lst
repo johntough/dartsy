@@ -1,0 +1,6 @@
+com/tough/matchcompletionservice/model/UserMatchState.class
+com/tough/matchcompletionservice/model/MatchState.class
+com/tough/matchcompletionservice/MatchCompletionServiceApplication.class
+com/tough/matchcompletionservice/model/GameMode.class
+com/tough/matchcompletionservice/model/MatchStatus.class
+com/tough/matchcompletionservice/kafka/KafkaConsumerService.class
