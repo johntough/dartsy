@@ -29,8 +29,8 @@ public class UserService {
     }
 
     public void updateUserProfile(User updatedUser) {
-        User existingUser = userRepository.findById(updatedUser.getId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + updatedUser.getId()));
+        User existingUser = userRepository.findById(updatedUser.getIdpSubject())
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + updatedUser.getIdpSubject()));
 
         if (!existingUser.getIdpSubject().equals(updatedUser.getIdpSubject())) {
             LOGGER.warn("Provided idpSubject {} differs from existingUser.getIdpSubject(): {}", updatedUser.getIdpSubject(), existingUser.getIdpSubject());
