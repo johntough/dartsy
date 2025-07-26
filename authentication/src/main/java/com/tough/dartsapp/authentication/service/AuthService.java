@@ -17,7 +17,7 @@ public class AuthService {
     }
 
     public User getAuthenticatedUserDetails(String userSub) {
-        return userRepository.findByIdpSubject(userSub)
+        return userRepository.findById(userSub)
                 .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + userSub));
     }
 }

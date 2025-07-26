@@ -9,8 +9,10 @@ services:
     environment:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-    volumes:
-      - sqlite-data:/data
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/dartsy-mongo
+    depends_on:
+      - mongo
+      - redis
     networks:
       - app-network
 
@@ -21,8 +23,10 @@ services:
     env_file: ./authentication/environment-variables/.env
     ports:
       - "8081:8080"
-    volumes:
-      - sqlite-data:/data
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/dartsy-mongo
+    depends_on:
+      - mongo
     networks:
       - app-network
 
@@ -49,6 +53,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
     networks:
       - app-network
 
@@ -99,7 +113,7 @@ services:
 
 volumes:
   redis-data:
-  sqlite-data:
+  mongo-data:
 
 networks:
   app-network:

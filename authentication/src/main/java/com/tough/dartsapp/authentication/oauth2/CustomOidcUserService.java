@@ -54,7 +54,7 @@ public class CustomOidcUserService extends OidcUserService {
     private User findOrCreateUser(OidcUser oidcUser) {
         String idpSubject = oidcUser.getAttribute("sub");
 
-        return userRepository.findByIdpSubject(idpSubject).orElseGet(() -> {
+        return userRepository.findById(idpSubject).orElseGet(() -> {
             User newUser = new User();
             newUser.setIdpSubject(idpSubject);
             newUser.setEmail(oidcUser.getAttribute("email"));

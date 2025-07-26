@@ -2,10 +2,10 @@ package com.tough.dartsapp.authentication.repository.integration;
 
 import com.tough.dartsapp.authentication.model.User;
 import com.tough.dartsapp.authentication.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -14,13 +14,19 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
+@DataMongoTest(properties = {
+        "spring.data.mongodb.port=0"
+})
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UserRepositoryIntegrationTest {
 
     @Autowired
     UserRepository userRepository;
+
+    @BeforeEach
+    void cleanDatabase() {
+        userRepository.deleteAll();
+    }
 
     @Test
     void testSaveUser() {
@@ -31,7 +37,6 @@ class UserRepositoryIntegrationTest {
         user.setRoles(Set.of("ROLE_USER"));
         User savedUser = userRepository.save(user);
 
-        assertNotNull(savedUser.getId());
         assertEquals("test-name", savedUser.getName());
         assertEquals("test@email.address", savedUser.getEmail());
         assertEquals("test-subject", savedUser.getIdpSubject());
@@ -47,9 +52,9 @@ class UserRepositoryIntegrationTest {
         user.setRoles(Set.of("ROLE_USER"));
         User savedUser = userRepository.save(user);
 
-        Optional<User> returnedUser = userRepository.findByIdpSubject("test-subject");
+        Optional<User> returnedUser = userRepository.findById("test-subject");
         assertTrue(returnedUser.isPresent());
-        assertNotNull(savedUser.getId());
+
         assertEquals("test-name", savedUser.getName());
         assertEquals("test@email.address", savedUser.getEmail());
         assertEquals("test-subject", savedUser.getIdpSubject());
@@ -58,7 +63,7 @@ class UserRepositoryIntegrationTest {
 
     @Test
     void testFindByGoogleSubjectNoUsersExist() {
-        Optional<User> users = userRepository.findByIdpSubject("test-subject");
+        Optional<User> users = userRepository.findById("test-subject");
         assertTrue(users.isEmpty());
     }
 }

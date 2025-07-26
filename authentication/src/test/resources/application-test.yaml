@@ -1,8 +1,14 @@
 spring:
-  datasource:
-    url: jdbc:sqlite::memory
-    driverClassName: org.sqlite.JDBC
-  jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
-    hibernate:
-      ddl-auto: create-drop
+  data:
+    mongodb:
+      port: 0
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.6
+
+logging:
+  level:
+    org.springframework.boot.autoconfigure.mongo.embedded: DEBUG
