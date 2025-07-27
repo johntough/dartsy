@@ -55,15 +55,19 @@ export default function LifetimeStatsPage({ stats, onBack }: LifetimeStatsPagePr
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
               <div>
                 <StatRow label="Games Played" value={stats.gamesPlayed} />
-                <StatRow label="Games Won" value={`${stats.gamesWon} (${stats.winPercentage.toFixed(1)}%)`} />
+                <StatRow label="Games Won" value={`${stats.gamesWon} (${Number.isInteger(stats.winPercentage)
+                    ? stats.winPercentage
+                    : stats.winPercentage.toFixed(1)}%)`} />
                 <StatRow label="Highest Checkout" value={stats.highestCheckout} />
-                <StatRow label="Best Leg (Darts)" value={stats.bestLegDarts} />
+                <StatRow label="Best Leg (Darts)" value={stats.bestLeg} />
+                <StatRow label="3-Dart Average" value={stats.lifetimeAverage.toFixed(2)} />
               </div>
               <div>
-                <StatRow label="100+ Scores" value={stats.total100s} />
-                <StatRow label="140+ Scores" value={stats.total140s} />
-                <StatRow label="180 Scores" value={stats.total180s} />
-                <StatRow label="3-Dart Average" value={stats.lifetimeAverage.toFixed(2)} />
+                <StatRow label="100+ Scores" value={stats.oneHundredPlusScores} />
+                <StatRow label="140+ Scores" value={stats.oneHundredFortyPlusScores} />
+                <StatRow label="180 Scores" value={stats.oneHundredEightyScores} />
+                <StatRow label="Total Darts Thrown" value={stats.numberOfDartsThrown} />
+                <StatRow label="Total Points Scored" value={stats.totalScore} />
               </div>
             </dl>
              <div className="mt-8 flex justify-center">

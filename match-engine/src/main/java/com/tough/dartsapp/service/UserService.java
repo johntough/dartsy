@@ -2,6 +2,7 @@ package com.tough.dartsapp.service;
 
 import com.tough.dartsapp.controller.MatchController;
 import com.tough.dartsapp.exception.UserNotFoundException;
+import com.tough.dartsapp.model.LifetimeStats;
 import com.tough.dartsapp.model.User;
 import com.tough.dartsapp.model.UserInfo;
 import com.tough.dartsapp.repository.UserRepository;
@@ -41,5 +42,11 @@ public class UserService {
         existingUser.setLocation(updatedUser.getLocation());
 
         userRepository.save(existingUser);
+    }
+
+    public LifetimeStats getLifetimeStatsForUser(String userId) {
+        return userRepository.findById(userId)
+                .map(User::getLifetimeStats)
+                .orElse(new LifetimeStats());
     }
 }

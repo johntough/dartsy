@@ -1,11 +1,6 @@
 spring:
   application:
     name: "backend"
-  jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
-    hibernate:
-      ddl-auto: update
-    show-sql: false
   data:
     mongodb:
       uri: mongodb://mongo:27017/dartsy-mongo

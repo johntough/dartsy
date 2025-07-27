@@ -1,6 +1,9 @@
 spring:
   application:
     name: "match-completion-service"
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/dartsy-mongo
   kafka:
     bootstrap-servers: kafka:9092
     consumer:
@@ -10,8 +13,8 @@ spring:
       properties:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: com.tough.matchcompletionservice.model
-        spring.json.value.default.type: com.tough.matchcompletionservice.model.MatchState
+        spring.json.trusted.packages: com.tough.dartsapp.matchcompletion.model
+        spring.json.value.default.type: com.tough.dartsapp.matchcompletion.model.MatchState
       auto-offset-reset: earliest
 server:
   port: 8080

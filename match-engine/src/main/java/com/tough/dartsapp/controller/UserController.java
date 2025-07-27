@@ -1,5 +1,6 @@
 package com.tough.dartsapp.controller;
 
+import com.tough.dartsapp.model.LifetimeStats;
 import com.tough.dartsapp.model.User;
 import com.tough.dartsapp.model.UserInfo;
 import com.tough.dartsapp.service.UserService;
@@ -44,12 +45,27 @@ public class UserController {
 
         String userSub = (String) request.getAttribute("userSub");
 
-        if (!userSub.equals(updatedUser.getIdpSubject())) {
+        if (!userSub.equals(userId)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         userService.updateUserProfile(updatedUser);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("user/{userId}/lifetimeStats")
+    public ResponseEntity<LifetimeStats> getLifetimeStats(@PathVariable String userId, HttpServletRequest request) {
+        LOGGER.info("Get user/{}/lifetimeStats called", userId);
+
+        String userSub = (String) request.getAttribute("userSub");
+
+        if (!userSub.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        LifetimeStats lifetimeStats = userService.getLifetimeStatsForUser(userId);
+
+        return ResponseEntity.ok().body(lifetimeStats);
     }
 }

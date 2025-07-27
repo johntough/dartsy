@@ -36,6 +36,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8082:8080"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/dartsy-mongo
+    depends_on:
+      - mongo
     networks:
       - app-network
 #  frontend:

@@ -20,6 +20,8 @@ public class User {
 
     private Set<String> roles = new HashSet<>();
 
+    private LifetimeStats lifetimeStats;
+
     public String getIdpSubject() {
         return idpSubject;
     }
@@ -46,5 +48,13 @@ public class User {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public void setLifetimeStats(LifetimeStats lifetimeStats) {
+        this.lifetimeStats = lifetimeStats;
+    }
+
+    public LifetimeStats getLifetimeStats() {
+        return lifetimeStats;
     }
 }

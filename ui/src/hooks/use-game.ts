@@ -26,12 +26,14 @@ export type LifetimeStats = {
     gamesPlayed: number;
     gamesWon: number;
     winPercentage: number;
-    total100s: number;
-    total140s: number;
-    total180s: number;
+    oneHundredPlusScores: number;
+    oneHundredFortyPlusScores: number;
+    oneHundredEightyScores: number;
     lifetimeAverage: number;
     highestCheckout: number;
-    bestLegDarts: number;
+    bestLeg: number;
+    numberOfDartsThrown: number;
+    totalScore: number;
 };
 
 // Types aligned with frontend state
@@ -98,12 +100,14 @@ const INITIAL_LIFETIME_STATS: LifetimeStats = {
     gamesPlayed: 0,
     gamesWon: 0,
     winPercentage: 0,
-    total100s: 0,
-    total140s: 0,
-    total180s: 0,
+    oneHundredPlusScores: 0,
+    oneHundredFortyPlusScores: 0,
+    oneHundredEightyScores: 0,
     lifetimeAverage: 0,
     highestCheckout: 0,
-    bestLegDarts: 0,
+    bestLeg: 0,
+    numberOfDartsThrown: 0,
+    totalScore: 0
 };
 
 const AI_LEVEL_SETTINGS = {
@@ -119,9 +123,7 @@ const BOGEY_NUMBERS = [169, 168, 166, 165, 163, 162, 159];
 const saveProfileToBackend = async (profile: PlayerProfile): Promise<void> => {
   console.log("Saving profile to backend:", profile);
 
-  const userId = profile.id;
-
-  fetch(`http://localhost:8080/user/${userId}`, {
+  fetch(`http://localhost:8080/user/${profile.idpSubject}`, {
       method: 'PUT',
       headers: {
           'Content-Type': 'application/json'
@@ -202,26 +204,60 @@ const fetchMatchStateFromBackend = async (): Promise<MatchData | null> => {
     }
 }
 
-
-/**
- * A dummy function to simulate fetching lifetime stats from a backend.
- * @returns A promise that resolves with dummy stats.
- */
-const fetchLifetimeStatsFromBackend = async (): Promise<LifetimeStats> => {
+const fetchLifetimeStatsFromBackend = async (profile: PlayerProfile): Promise<LifetimeStats> => {
     console.log("Fetching lifetime stats from backend...");
-    await new Promise(resolve => setTimeout(resolve, 500));
+
     const stats: LifetimeStats = {
-        gamesPlayed: 123,
-        gamesWon: 78,
-        winPercentage: 63.4,
-        total100s: 256,
-        total140s: 89,
-        total180s: 31,
-        lifetimeAverage: 68.45,
-        highestCheckout: 158,
-        bestLegDarts: 12,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        winPercentage: 0,
+        oneHundredPlusScores: 0,
+        oneHundredFortyPlusScores: 0,
+        oneHundredEightyScores: 0,
+        lifetimeAverage: 0,
+        highestCheckout: 0,
+        bestLeg: 0,
+        numberOfDartsThrown: 0,
+        totalScore: 0
     };
-    console.log("Lifetime stats fetched:", stats);
+
+    try {
+        const response = await fetch(`http://localhost:8080/user/${profile.idpSubject}/lifetimeStats`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            throw new Error("Unauthorized");
+        }
+
+        if (!response.ok) {
+            throw new Error("Something went wrong.");
+        }
+
+        const data = await response.json();
+
+        stats.gamesPlayed = data.gamesPlayed;
+        stats.gamesWon = data.gamesWon;
+        if (data.gamesPlayed > 0) {
+            stats.winPercentage = (data.gamesWon / data.gamesPlayed) * 100;
+        }
+
+        stats.oneHundredPlusScores = data.oneHundredPlusScores;
+        stats.oneHundredFortyPlusScores = data.oneHundredFortyPlusScores;
+        stats.oneHundredEightyScores = data.oneHundredEightyScores;
+        stats.highestCheckout = data.highestCheckout;
+        stats.bestLeg = data.bestLeg;
+        if (data.numberOfDartsThrown > 0) {
+            stats.lifetimeAverage = (data.totalScore / data.numberOfDartsThrown) * 3;
+        }
+        stats.numberOfDartsThrown = data.numberOfDartsThrown;
+        stats.totalScore = data.totalScore;
+
+        console.log("Lifetime stats fetched:", stats);
+    } catch (error) {
+        console.error('Error returning lifetime stats', error);
+    }
     return stats;
 }
 
@@ -385,7 +421,7 @@ export function useGame() {
   const toggleLifetimeStats = async () => {
     if (!isLifetimeStatsVisible) {
         try {
-            const fetchedStats = await fetchLifetimeStatsFromBackend();
+            const fetchedStats = await fetchLifetimeStatsFromBackend(profile);
             setLifetimeStats(fetchedStats);
         } catch (error) {
             console.error("Failed to fetch lifetime stats:", error);
