@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import {useState, useRef, useMemo, useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import OnScreenKeyboard from "@/components/on-screen-keyboard";
+import {ALL_COUNTRIES} from "@/lib/countries";
 
 interface GameSetupWizardProps {
   onSetupComplete: (config: Omit<GameConfig, 'legsWon' | 'player1Location'>) => void;
@@ -21,14 +22,12 @@ interface GameSetupWizardProps {
   playerProfile: PlayerProfile;
 }
 
-const FAKE_PLAYERS = [
-  "Darth Vaper",
-  "The Bullionaire",
-  "Sir Scores-a-Lot",
-  "Mad-Eye Moody",
-  "Arrow Dynamic",
-  "Triple Threat",
-];
+interface RemotePlayer {
+    name: string;
+    location: string;
+    idpSubject: string;
+    email: string;
+}
 
 const AI_LEVELS: { id: AiLevelLabel; name: string; description: string; avgRange: string }[] = [
     { id: 'newbie', name: "Never played before", description: "Just learning the ropes.", avgRange: "25-45" },
@@ -46,9 +45,10 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
   const [player2Name, setPlayer2Name] = useState("Player 2");
   const [initialScore, setInitialScore] = useState("501");
   const [legs, setLegs] = useState(5);
-  const [selectedOpponent, setSelectedOpponent] = useState<string | null>(null);
+  const [selectedOpponent, setSelectedOpponent] = useState<RemotePlayer | null>(null);
   const [aiLevel, setAiLevel] = useState<AiLevelLabel>('pub');
-  
+  const [remotePlayers, setRemotePlayers] = useState<RemotePlayer[]>([]);
+
   const [activeInput, setActiveInput] = useState<'player1Name' | 'player2Name' | null>(null);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const player1Ref = useRef<HTMLInputElement>(null);
@@ -60,6 +60,15 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
     if (gameMode === 'remote') return 4;
     return 4;
   }, [gameMode]);
+
+    useEffect(() => {
+        if (step === 4 && gameMode === 'remote') {
+            async function fetchPlayers() {
+                await loadRemotePlayers();
+            }
+            fetchPlayers();
+        }
+    }, [step, gameMode]);
 
 
   const handleNext = () => {
@@ -80,7 +89,8 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
     onSetupComplete({
       gameMode,
       player1Name,
-      player2Name: gameMode === 'remote' ? selectedOpponent! : (gameMode === 'ai' ? 'AI Opponent' : player2Name),
+      player2Name: gameMode === 'remote' ? selectedOpponent?.name! : (gameMode === 'ai' ? 'AI Opponent' : player2Name),
+      player2Subject: gameMode === 'remote' ? selectedOpponent?.idpSubject! : (gameMode === 'ai' ? 'AI Opponent' : "user2_subject"),
       initialScore: parseInt(initialScore, 10),
       legs: legs,
       aiLevel,
@@ -114,6 +124,36 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
     } else if (activeInput === 'player2Name') {
       setIsKeyboardVisible(false);
       setActiveInput(null);
+    }
+  };
+
+    const getFlag = (locationCode: string) => {
+        if (!locationCode || locationCode === 'none') return null;
+        const country = ALL_COUNTRIES.find(c => c.code === locationCode);
+        return country?.flag;
+    };
+
+  const loadRemotePlayers = async () => {
+
+    try {
+        const response = await fetch(`http://localhost:8080/remote/users`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            throw new Error("Unauthorized");
+        }
+
+        if (!response.ok) {
+            throw new Error("Something went wrong.");
+        }
+
+        const remotePlayersData = await response.json();
+        setRemotePlayers(remotePlayersData);
+    } catch (error) {
+      console.error('Error loading remote players', error);
+        setRemotePlayers([]);
     }
   };
 
@@ -311,21 +351,32 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
                     <h3 className="text-xl font-medium">Challenge a Player</h3>
                     <ScrollArea className="h-64 w-full rounded-md border">
                         <div className="p-4 space-y-3">
-                            {FAKE_PLAYERS.map((player) => (
-                                <button
-                                    key={player}
-                                    onClick={() => setSelectedOpponent(player)}
-                                    className={cn(
-                                        "w-full text-left flex items-center gap-4 p-4 rounded-lg transition-colors border",
-                                        selectedOpponent === player ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
-                                    )}
-                                >
-                                    <Avatar className="h-12 w-12">
-                                        <AvatarFallback className="text-xl">{player.substring(0,2)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-lg font-medium">{player}</span>
-                                </button>
-                            ))}
+                            {remotePlayers.map((player) => {
+                                const playerFlag = getFlag(player.location);
+                                return (
+                                    <button
+                                        key={player.idpSubject}
+                                        onClick={() => setSelectedOpponent(player)}
+                                        className={cn(
+                                            "w-full text-left flex items-center gap-4 p-4 rounded-lg transition-colors border",
+                                            selectedOpponent?.idpSubject === player.idpSubject ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                                        )}
+                                    >
+                                        {playerFlag ? (
+                                            <span className="text-4xl">{playerFlag}</span>
+                                        ) : (
+                                            <Avatar className="h-12 w-12">
+                                                <AvatarFallback
+                                                    className="text-xl">{player.name.substring(0, 2)}</AvatarFallback>
+                                            </Avatar>
+                                        )}
+
+                                        <div className="flex items-center justify-end gap-3">
+                                            <span className="text-lg font-medium">{player.name}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </ScrollArea>
                 </div>

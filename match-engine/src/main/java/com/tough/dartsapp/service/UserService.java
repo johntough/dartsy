@@ -1,6 +1,5 @@
 package com.tough.dartsapp.service;
 
-import com.tough.dartsapp.controller.MatchController;
 import com.tough.dartsapp.exception.UserNotFoundException;
 import com.tough.dartsapp.model.LifetimeStats;
 import com.tough.dartsapp.model.User;
@@ -25,8 +24,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<UserInfo> getUsers() {
-        return userRepository.findAllBy();
+    public List<UserInfo> getRemoteUsers(String userSubject) {
+        return userRepository.findByIdpSubjectNot(userSubject);
     }
 
     public void updateUserProfile(User updatedUser) {

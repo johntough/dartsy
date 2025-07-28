@@ -30,11 +30,12 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("users")
-    public ResponseEntity<List<UserInfo>> getUsers() {
+    @GetMapping("/remote/users")
+    public ResponseEntity<List<UserInfo>> getUsers(HttpServletRequest request) {
         LOGGER.info("GET users called");
 
-        List<UserInfo> users = userService.getUsers();
+        String userSubject = (String) request.getAttribute("userSub");
+        List<UserInfo> users = userService.getRemoteUsers(userSubject);
 
         return ResponseEntity.ok().body(users);
     }
@@ -43,9 +44,9 @@ public class UserController {
     public ResponseEntity<Void> updateUserProfile(@RequestBody User updatedUser, @PathVariable String userId, HttpServletRequest request) {
         LOGGER.info("PUT user/{} called", userId);
 
-        String userSub = (String) request.getAttribute("userSub");
+        String userSubject = (String) request.getAttribute("userSub");
 
-        if (!userSub.equals(userId)) {
+        if (!userSubject.equals(userId)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -58,9 +59,9 @@ public class UserController {
     public ResponseEntity<LifetimeStats> getLifetimeStats(@PathVariable String userId, HttpServletRequest request) {
         LOGGER.info("Get user/{}/lifetimeStats called", userId);
 
-        String userSub = (String) request.getAttribute("userSub");
+        String userSubject = (String) request.getAttribute("userSub");
 
-        if (!userSub.equals(userId)) {
+        if (!userSubject.equals(userId)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 

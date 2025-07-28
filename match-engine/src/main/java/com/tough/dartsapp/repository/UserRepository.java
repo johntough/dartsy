@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
-    List<UserInfo> findAllBy();
+    List<UserInfo> findByIdpSubjectNot(String idpSubject);
 }

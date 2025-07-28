@@ -66,6 +66,7 @@ export type GameConfig = {
   legsWon: { player1: number; player2: number };
   player1Name: string;
   player2Name: string;
+  player2Subject: string;
   player1Location: string;
   aiLevel: AiLevelLabel;
 };
@@ -481,7 +482,7 @@ export function useGame() {
               scores: []
           },
           challengedUserMatchState: {
-              subject: 'user2_subject',
+              subject: config.player2Subject,
               name: config.gameMode === 'ai' ? 'AI Opponent' : config.player2Name,
               location: 'none',
               highestCheckout: 0,
@@ -497,15 +498,16 @@ export function useGame() {
       };
 
     switch (mapGameModeToBackend(config.gameMode)) {
-        case 'LOCAL': {
+        case 'LOCAL':
+        case 'REMOTE': {
             const newLocalMatchConfigRequest: MatchConfigRequest = {
                 initiatorUserSubject: profile.idpSubject,
                 initiatorUserName: profile.name,
                 initiatorUserLocation: profile.location,
-                challengedUserSubject: config.player2Name,
+                challengedUserSubject: config.player2Subject,
                 challengedUserName: config.player2Name,
                 challengedUserLocation: "",
-                gameMode: "LOCAL",
+                gameMode: mapGameModeToBackend(config.gameMode),
                 initialStartingScore: config.initialScore,
                 totalLegs: config.legs,
                 currentLegStarterPlayerSubject: 'user1_subject',
@@ -538,9 +540,6 @@ export function useGame() {
                 .catch(error => {
                     console.error('Error configuring match');
                 });
-            break;
-        }
-        case 'REMOTE': {
             break;
         }
         case 'AI': {
@@ -634,6 +633,7 @@ export function useGame() {
         const playerState = newMatchData[winningPlayerStateKey];
         let newPlayerState = { ...playerState };
 
+        // TODO: is there an issue here or if it's infinity at setup is that fine? (if you only get here through winning a leg, i.e. losing a leg won't register a best leg of 0?)
         if (dartsUsedInLeg < newPlayerState.bestLeg) {
             newPlayerState.bestLeg = dartsUsedInLeg;
         }

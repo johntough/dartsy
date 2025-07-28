@@ -27,12 +27,13 @@ public class MatchCompletionService {
                 updateUserStats(matchState.getInitiatorUserMatchState(), matchState.getInitialStartingScore(), isInitiatorWinner(matchState));
                 break;
             case GameMode.REMOTE:
-                LOGGER.warn("Persisting stats in REMOTE game mode not yet supported.");
+                updateUserStats(matchState.getInitiatorUserMatchState(), matchState.getInitialStartingScore(), isInitiatorWinner(matchState));
+                updateUserStats(matchState.getChallengedUserMatchState(), matchState.getInitialStartingScore(), !isInitiatorWinner(matchState));
                 break;
         }
     }
 
-    private void updateUserStats(UserMatchState userMatchState, int initialStartingScore, boolean isInitiatorWinner) {
+    private void updateUserStats(UserMatchState userMatchState, int initialStartingScore, boolean isUserWinner) {
 
         userRepository.findById(userMatchState.getSubject()).ifPresentOrElse(user -> {
 
@@ -42,7 +43,7 @@ public class MatchCompletionService {
                 }
 
                 user.getLifetimeStats().incrementGamesPlayed();
-                if (isInitiatorWinner) {
+                if (isUserWinner) {
                     user.getLifetimeStats().incrementGamesWon();
                 }
 
@@ -72,7 +73,7 @@ public class MatchCompletionService {
 
                 LOGGER.info("Match stats persisted for user: {}. Match Won: {}, Best Leg: {}, Highest Checkout: {}, 100+: {}, 140+: {}, 180: {}, Total Darts Thrown: {}",
                     userMatchState.getSubject(),
-                    isInitiatorWinner,
+                    isUserWinner,
                     userMatchState.getBestLeg(),
                     userMatchState.getHighestCheckout(),
                     userMatchState.getOneHundredCount(),
