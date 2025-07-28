@@ -12,7 +12,15 @@ import type {MatchData, UserMatchState, RoundScore, GameMode as BackendGameMode,
 
 export type Player = "player1" | "player2";
 export type GameMode = "2p" | "ai" | "remote";
-export type AiLevel = 'newbie' | 'beginner' | 'pub' | 'county' | 'pro';
+export type AiLevelLabel = 'newbie' | 'beginner' | 'pub' | 'county' | 'pro';
+
+const stringToAiLevel: Record<AiLevelLabel, AiLevel> = {
+    newbie: 1,
+    beginner: 2,
+    pub: 3,
+    county: 4,
+    pro: 5,
+};
 
 export type PlayerProfile = {
   id: number;
@@ -59,7 +67,7 @@ export type GameConfig = {
   player1Name: string;
   player2Name: string;
   player1Location: string;
-  aiLevel: AiLevel;
+  aiLevel: AiLevelLabel;
 };
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
@@ -332,9 +340,9 @@ export function useGame() {
         if (mode === 'AI') return 'ai';
         return 'remote';
     }
-    const mapAiLevel = (level?: number): AiLevel => {
+    const mapAiLevel = (level?: number): AiLevelLabel => {
         for (const key in AI_LEVEL_SETTINGS) {
-            const aiLevelKey = key as AiLevel;
+            const aiLevelKey = key as AiLevelLabel;
             if (AI_LEVEL_SETTINGS[aiLevelKey].level === level) {
                 return aiLevelKey;
             }
@@ -536,6 +544,47 @@ export function useGame() {
             break;
         }
         case 'AI': {
+            const newLocalMatchConfigRequest: MatchConfigRequest = {
+                initiatorUserSubject: profile.idpSubject,
+                initiatorUserName: profile.name,
+                initiatorUserLocation: profile.location,
+                challengedUserSubject: config.player2Name,
+                challengedUserName: config.player2Name,
+                challengedUserLocation: "",
+                gameMode: "AI",
+                AILevel: stringToAiLevel[config.aiLevel],
+                initialStartingScore: config.initialScore,
+                totalLegs: config.legs,
+                currentLegStarterPlayerSubject: 'user1_subject',
+                currentTurnPlayerSubject: 'user1_subject'
+            }
+
+            fetch(`http://localhost:8080/match/local/configure`,{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(newLocalMatchConfigRequest)
+            })
+                .then((response) => {
+                    if (response.status === 401) {
+                        throw new Error("Unauthorized");
+                    }
+
+                    if (!response.ok) {
+                        throw new Error("Something went wrong.");
+                    }
+
+                    return response.text();
+                })
+                .then((matchId) => {
+                    newMatchData.matchId = matchId;
+                    localStorage.setItem('matchId', matchId);
+                })
+                .catch(error => {
+                    console.error('Error configuring match');
+                });
             break;
         }
     }
@@ -640,8 +689,6 @@ export function useGame() {
       setMatchData(newMatchData);
       
       finalizeWinner(player, score, dartsThrownInLeg);
-      
-      //saveMatchStateToBackend(newMatchData);
     }
     setIsCheckoutPending(false);
     setPendingCheckout(null);
@@ -824,6 +871,7 @@ export function useGame() {
           const playerState = {...newMatchData.challengedUserMatchState};
           playerState.totalMatchDartsThrown += checkoutDarts;
           playerState.totalMatchScore += aiCurrentScore;
+          playerState.legsWon += 1;
           playerState.scores.push({ 
               roundScore: aiCurrentScore, 
               roundIndex: playerState.scores.length + 1, 

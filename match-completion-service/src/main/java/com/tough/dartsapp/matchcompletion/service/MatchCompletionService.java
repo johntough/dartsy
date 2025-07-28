@@ -23,10 +23,8 @@ public class MatchCompletionService {
 
         switch (matchState.getGameMode()) {
             case GameMode.LOCAL:
-                updateUserStats(matchState.getInitiatorUserMatchState(), isInitiatorWinner(matchState));
-                break;
             case GameMode.AI:
-                LOGGER.warn("Persisting stats in AI game mode not yet supported.");
+                updateUserStats(matchState.getInitiatorUserMatchState(), matchState.getInitialStartingScore(), isInitiatorWinner(matchState));
                 break;
             case GameMode.REMOTE:
                 LOGGER.warn("Persisting stats in REMOTE game mode not yet supported.");
@@ -34,7 +32,7 @@ public class MatchCompletionService {
         }
     }
 
-    private void updateUserStats(UserMatchState userMatchState, boolean isInitiatorWinner) {
+    private void updateUserStats(UserMatchState userMatchState, int initialStartingScore, boolean isInitiatorWinner) {
 
         userRepository.findById(userMatchState.getSubject()).ifPresentOrElse(user -> {
 
@@ -48,13 +46,20 @@ public class MatchCompletionService {
                     user.getLifetimeStats().incrementGamesWon();
                 }
 
+
                 if (userMatchState.getHighestCheckout() > user.getLifetimeStats().getHighestCheckout()) {
                     user.getLifetimeStats().setHighestCheckout(userMatchState.getHighestCheckout());
                 }
 
-                if (user.getLifetimeStats().getBestLeg() == 0 || userMatchState.getBestLeg() < user.getLifetimeStats().getBestLeg()) {
-                    user.getLifetimeStats().setBestLeg(userMatchState.getBestLeg());
+                if (initialStartingScore == 501) {
+                    int bestLeg = userMatchState.getBestLeg();
+                    int lifetimeBest = user.getLifetimeStats().getBestLeg();
+
+                    if (bestLeg > 0 && (lifetimeBest == 0 || bestLeg < lifetimeBest)) {
+                        user.getLifetimeStats().setBestLeg(bestLeg);
+                    }
                 }
+
 
                 user.getLifetimeStats().setOneHundredPlusScores(user.getLifetimeStats().getOneHundredPlusScores() + userMatchState.getOneHundredCount());
                 user.getLifetimeStats().setOneHundredFortyPlusScores(user.getLifetimeStats().getOneHundredFortyPlusScores() + userMatchState.getOneHundredAndFortyCount());

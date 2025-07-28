@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bot, User, Users, Trophy, Star, X } from "lucide-react";
-import type { GameConfig, AiLevel, PlayerProfile } from "@/hooks/use-game";
+import type { GameConfig, AiLevelLabel, PlayerProfile } from "@/hooks/use-game";
 import { Slider } from "./ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,7 +30,7 @@ const FAKE_PLAYERS = [
   "Triple Threat",
 ];
 
-const AI_LEVELS: { id: AiLevel; name: string; description: string; avgRange: string }[] = [
+const AI_LEVELS: { id: AiLevelLabel; name: string; description: string; avgRange: string }[] = [
     { id: 'newbie', name: "Never played before", description: "Just learning the ropes.", avgRange: "25-45" },
     { id: 'beginner', name: "Beginner", description: "Knows which end of the dart is which.", avgRange: "30-60" },
     { id: 'pub', name: "Solid Pub Player", description: "A regular at the local league.", avgRange: "55-70" },
@@ -47,7 +47,7 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
   const [initialScore, setInitialScore] = useState("501");
   const [legs, setLegs] = useState(5);
   const [selectedOpponent, setSelectedOpponent] = useState<string | null>(null);
-  const [aiLevel, setAiLevel] = useState<AiLevel>('pub');
+  const [aiLevel, setAiLevel] = useState<AiLevelLabel>('pub');
   
   const [activeInput, setActiveInput] = useState<'player1Name' | 'player2Name' | null>(null);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);

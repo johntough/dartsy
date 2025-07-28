@@ -58,9 +58,9 @@ export default function LifetimeStatsPage({ stats, onBack }: LifetimeStatsPagePr
                 <StatRow label="Games Won" value={`${stats.gamesWon} (${Number.isInteger(stats.winPercentage)
                     ? stats.winPercentage
                     : stats.winPercentage.toFixed(1)}%)`} />
-                <StatRow label="Highest Checkout" value={stats.highestCheckout} />
-                <StatRow label="Best Leg (Darts)" value={stats.bestLeg} />
-                <StatRow label="3-Dart Average" value={stats.lifetimeAverage.toFixed(2)} />
+                <StatRow label="Highest Checkout" value={stats.highestCheckout === 0 ? '-' : stats.highestCheckout} />
+                <StatRow label="Best Leg (501 games only)" value={stats.bestLeg === 0 ? '-' : stats.bestLeg} />
+                <StatRow label="3-Dart Average" value={stats.lifetimeAverage === 0 ? '-' : stats.lifetimeAverage.toFixed(2)} />
               </div>
               <div>
                 <StatRow label="100+ Scores" value={stats.oneHundredPlusScores} />
