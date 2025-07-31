@@ -1,7 +1,6 @@
 package com.tough.dartsapp.controller;
 
 import com.tough.dartsapp.model.MatchState;
-import com.tough.dartsapp.model.ScoreEntry;
 import com.tough.dartsapp.service.ScoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +25,12 @@ public class ScoreController {
         this.scoreService = scoreService;
     }
 
-    @MessageMapping("/match/{matchId}/score")
-    public void sendScore(@DestinationVariable String matchId, @Payload ScoreEntry score) {
+    @MessageMapping("/match/remote/{matchId}/updateState")
+    public void updateRemoteMatchState(@DestinationVariable String matchId, @Payload MatchState matchState) {
 
-        LOGGER.info("Message received for match id: {}, Player id: {} scored {}", matchId, score.getUserSubject(), score.getRoundScore());
-        LOGGER.info("is Winning Score: {}", score.isWinningScore());
+        LOGGER.info("Message received for match id: {}", matchId);
 
-        scoreService.registerScore(matchId, score);
+        scoreService.updateRemoteMatchState(matchState);
     }
 
     @PutMapping("/match/local/{matchId}/updateState")

@@ -6,7 +6,7 @@ import java.util.List;
 public class UserMatchState {
     private String subject;
     private String name;
-    private String playerLocation;
+    private String location;
     private int highestCheckout;
     private int bestLeg;
     private int oneHundredAndEightyCount;
@@ -33,12 +33,12 @@ public class UserMatchState {
         this.name = name;
     }
 
-    public String getPlayerLocation() {
-        return playerLocation;
+    public String getLocation() {
+        return location;
     }
 
-    public void setPlayerLocation(String playerLocation) {
-        this.playerLocation = playerLocation;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public int getHighestCheckout() {

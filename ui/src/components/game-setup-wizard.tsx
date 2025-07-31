@@ -461,7 +461,7 @@ export function GameSetupWizard({ onSetupComplete, onCancel, playerProfile }: Ga
                 </Button>
               ) : (
                 <Button onClick={handleStartGame} disabled={isStartGameDisabled()} className="w-auto h-14 px-8 text-lg">
-                  Start Game
+                    {gameMode === "remote" ? "Send match request!" : "Start Game"}
                 </Button>
               )}
             </CardFooter>

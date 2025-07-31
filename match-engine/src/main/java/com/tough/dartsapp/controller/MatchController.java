@@ -25,10 +25,10 @@ public class MatchController {
         this.matchService = matchService;
     }
 
-    @PostMapping("match/configure")
+    @PostMapping("match/remote/configure")
     public ResponseEntity<String> configureMatch(@RequestBody MatchConfigRequest matchConfigRequest) {
         LOGGER.info("POST match/configure called by user {} to challenge user {}", matchConfigRequest.getInitiatorUserName(), matchConfigRequest.getChallengedUserName());
-        String matchId = matchService.configureMatch(matchConfigRequest);
+        String matchId = matchService.configureRemoteMatch(matchConfigRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(matchId);
     }
 

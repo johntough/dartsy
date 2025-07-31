@@ -38,7 +38,7 @@ public class MatchRequestService {
 
         MatchRequestPayload matchRequestPayload = new MatchRequestPayload(
                 matchId,
-                initiatorUserName + " has challenged you to a match!"
+                initiatorUserName
         );
 
         try {

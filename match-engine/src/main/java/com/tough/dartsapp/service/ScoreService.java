@@ -30,23 +30,29 @@ public class ScoreService {
         this.kafkaProducerService = kafkaProducerService;
     }
 
-    public void registerScore(String matchId, ScoreEntry score) {
+    public void updateRemoteMatchState(MatchState updatedMatchState) {
 
-        MatchState matchState = redisTemplate.opsForValue().get("match:" + matchId);
+        MatchState matchState = redisTemplate.opsForValue().get("match:" + updatedMatchState.getMatchId());
 
         if (matchState == null) {
-            LOGGER.warn("Match state not found for match id: {}", matchId);
+            LOGGER.warn("Match state not found for match id: {}", matchState);
             return;
         }
 
-        // Step 1: Update MatchState as per newly registered score
-        updateMatchState(matchState, score);
+        // If the leg has been won then clear the scores. This protects from a complete leg being restored (remaining score 0)
+        // if the user refreshes their browser before a score is registered in the next leg
+        List<ScoreEntry> initiatorUserScores = updatedMatchState.getInitiatorUserMatchState().getScores();
+        List<ScoreEntry> challengedUserScores = updatedMatchState.getChallengedUserMatchState().getScores();
 
-        // Step 2: Send WebSocket message to prioritise responsiveness
-        sendWebSocketMessage(matchState);
+        if ((initiatorUserScores != null && !initiatorUserScores.isEmpty() && initiatorUserScores.getLast().isWinningScore()) ||
+                (challengedUserScores != null && !challengedUserScores.isEmpty() && challengedUserScores.getLast().isWinningScore())) {
+            updatedMatchState.getInitiatorUserMatchState().clearScores();
+            updatedMatchState.getChallengedUserMatchState().clearScores();
+        }
 
-        // Step 3: Update Redis
-        storeInRedis(matchState);
+        // Send WebSocket message to prioritise responsiveness
+        sendWebSocketMessage(updatedMatchState);
+        storeInRedis(updatedMatchState);
     }
 
     public void updateLocalMatchState(MatchState updatedMatchState) {
@@ -65,9 +71,7 @@ public class ScoreService {
 
         if ((initiatorUserScores != null && !initiatorUserScores.isEmpty() && initiatorUserScores.getLast().isWinningScore()) ||
                 (challengedUserScores != null && !challengedUserScores.isEmpty() && challengedUserScores.getLast().isWinningScore())) {
-
-            updatedMatchState.getInitiatorUserMatchState().clearScores();
-            updatedMatchState.getChallengedUserMatchState().clearScores();
+            clearLegScores(updatedMatchState);
         }
 
         storeInRedis(updatedMatchState);
@@ -81,26 +85,6 @@ public class ScoreService {
         }
     }
 
-    private void updateMatchState(MatchState matchState, ScoreEntry score) {
-
-        UserMatchState player = matchState.findUserMatchStateByUserSubject(score.getUserSubject());
-
-        if (player == null) {
-            // TODO: handle exception correctly: return 404?
-            throw new IllegalArgumentException("User not found with ID: " + score.getUserSubject());
-        }
-
-        // using 1-based indexing as that's how the game of darts works (i.e. you don't have a zero throw)
-        score.setRoundIndex(player.getScores().size() + 1);
-        player.getScores().add(score);
-
-        if (score.isWinningScore()) {
-            // increment legsWon count & clear scores to signify a new leg
-            registerWinningLeg(player);
-            clearLegScores(matchState);
-        }
-    }
-
     private void sendWebSocketMessage(MatchState matchState) {
         LOGGER.info("Broadcasting match state to: /topic/match/{}", matchState.getMatchId());
         messagingTemplate.convertAndSend("/topic/match/" + matchState.getMatchId(), matchState);
@@ -110,12 +94,6 @@ public class ScoreService {
         String key = "match:" + matchState.getMatchId();
         redisTemplate.opsForValue().set(key, matchState);
         LOGGER.info("MatchState updated in Redis with key: {}", key);
-    }
-
-    private void registerWinningLeg(UserMatchState player) {
-        int currentLegsWonCount = player.getLegsWon();
-        player.setLegsWon(currentLegsWonCount + 1);
-        LOGGER.info("Leg won by {}", player.getName());
     }
 
     private void clearLegScores(MatchState matchState) {

@@ -23,12 +23,17 @@ public class MatchService {
         this.matchRequestService = matchRequestService;
     }
 
-    public String configureMatch(MatchConfigRequest matchConfigRequest) {
+    public String configureRemoteMatch(MatchConfigRequest matchConfigRequest) {
         String matchId = UUID.randomUUID().toString();
 
         MatchState matchState = new MatchState();
         matchState.setMatchId(matchId);
         matchState.setMatchStatus(MatchStatus.REQUESTED);
+        matchState.setGameMode(GameMode.REMOTE);
+        matchState.setInitialStartingScore(matchConfigRequest.getInitialStartingScore());
+        matchState.setTotalLegs(matchConfigRequest.getTotalLegs());
+        matchState.setCurrentLegStarterPlayerSubject(matchConfigRequest.getCurrentLegStarterPlayerSubject());
+        matchState.setCurrentTurnPlayerSubject(matchConfigRequest.getCurrentTurnPlayerSubject());
 
         setupUserState(matchState, matchConfigRequest);
 
@@ -105,12 +110,12 @@ public class MatchService {
         UserMatchState initiator = new UserMatchState();
         initiator.setSubject(matchConfigRequest.getInitiatorUserSubject());
         initiator.setName(matchConfigRequest.getInitiatorUserName());
-        initiator.setPlayerLocation(matchConfigRequest.getInitiatorUserLocation());
+        initiator.setLocation(matchConfigRequest.getInitiatorUserLocation());
 
         UserMatchState challengedUser = new UserMatchState();
         challengedUser.setSubject(matchConfigRequest.getChallengedUserSubject());
         challengedUser.setName(matchConfigRequest.getChallengedUserName());
-        challengedUser.setPlayerLocation(matchConfigRequest.getChallengedUserLocation());
+        challengedUser.setLocation(matchConfigRequest.getChallengedUserLocation());
 
         matchState.setInitiatorUserMatchState(initiator);
         matchState.setChallengedUserMatchState(challengedUser);

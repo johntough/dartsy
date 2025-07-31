@@ -17,6 +17,7 @@ import MatchWinnerDialog from "@/components/match-winner-dialog";
 import ProfilePage from "@/components/profile-page";
 import LifetimeStatsPage from "@/components/lifetime-stats-page";
 import HowToPlay from "@/components/how-to-play";
+import MatchRequestNotificationDialog from "@/components/match-request-notification-dialog";
 
 export default function Home() {
   const [isSettingUp, setIsSettingUp] = useState(false);
@@ -77,6 +78,10 @@ export default function Home() {
     isLifetimeStatsVisible,
     lifetimeStats,
     toggleLifetimeStats,
+    matchRequestInitiatorUserName,
+    isMatchRequestNotificationOpen,
+    handleMatchRequestNotificationAccept,
+    handleMatchRequestNotificationCancel,
   } = useGame();
 
   const handleStartSetup = () => {
@@ -284,6 +289,12 @@ export default function Home() {
           </Button>
         </div>
       </main>
+      <MatchRequestNotificationDialog
+          isOpen={isMatchRequestNotificationOpen}
+          matchRequestInitiatorUserName={matchRequestInitiatorUserName}
+          onAccept={handleMatchRequestNotificationAccept}
+          onCancel={handleMatchRequestNotificationCancel}
+      />
     </div>
   );
 }

@@ -2,11 +2,11 @@ package com.tough.dartsapp.model;
 
 public class MatchRequestPayload {
     private String matchId;
-    private String message;
+    private String initiatorUserName;
 
-    public MatchRequestPayload(String matchId, String message) {
+    public MatchRequestPayload(String matchId, String initiatorUserName) {
         this.matchId = matchId;
-        this.message = message;
+        this.initiatorUserName = initiatorUserName;
     }
 
     public String getMatchId() {
@@ -17,11 +17,11 @@ public class MatchRequestPayload {
         this.matchId = matchId;
     }
 
-    public String getMessage() {
-        return message;
+    public String getInitiatorUserName() {
+        return initiatorUserName;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setInitiatorUserName(String initiatorUserName) {
+        this.initiatorUserName = initiatorUserName;
     }
 }

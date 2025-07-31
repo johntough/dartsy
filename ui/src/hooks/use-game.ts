@@ -9,6 +9,8 @@ import {
 } from "@/ai/flows/ai-opponent-difficulty-tuning";
 import { CHECKOUT_DATA } from "@/lib/checkout-data";
 import type {MatchData, UserMatchState, RoundScore, GameMode as BackendGameMode, MatchConfigRequest} from "@/lib/types";
+import {useWebSocket} from "@/hooks/use-websocket";
+import { EventSourcePolyfill } from "event-source-polyfill";
 
 export type Player = "player1" | "player2";
 export type GameMode = "2p" | "ai" | "remote";
@@ -29,6 +31,11 @@ export type PlayerProfile = {
   email: string;
   location: string; // country code
 };
+
+interface MatchRequestPayload {
+    matchId: string;
+    initiatorUserName: string;
+}
 
 export type LifetimeStats = {
     gamesPlayed: number;
@@ -153,66 +160,6 @@ const saveProfileToBackend = async (profile: PlayerProfile): Promise<void> => {
   });
 };
 
-/**
- * Saves the entire match state to a backend.
- * @param state The current game state, conforming to the MatchData schema.
- * @returns A promise that resolves when the data is "saved".
- */
-const saveMatchStateToBackend = async (state: MatchData): Promise<void> => {
-  console.log("Saving match state to backend:", state);
-
-  try {
-      const response = await fetch(`http://localhost:8080/match/local/${state.matchId}/updateState`, {
-          method: 'PUT',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify(state)
-      });
-
-      if (response.status === 401) {
-          throw new Error("Unauthorized");
-      }
-
-      if (!response.ok) {
-          throw new Error("Something went wrong.");
-      }
-
-      console.log("Match state saved.");
-    } catch (error) {
-      console.error("Failed to save match state:", error);
-      throw error; // rethrow if you want the caller to handle it
-    }
-}
-
-const fetchMatchStateFromBackend = async (): Promise<MatchData | null> => {
-    console.log("Attempting to fetch match state from backend...");
-
-    const localStorageMatchId = localStorage.getItem("matchId");
-    if (!localStorageMatchId) return null;
-
-    try {
-        const response = await fetch(`http://localhost:8080/match/restore/${localStorageMatchId}`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (response.status === 401) {
-            throw new Error("Unauthorized");
-        }
-
-        if (!response.ok) {
-            throw new Error("Something went wrong.");
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error restoring match', error);
-        return null;
-    }
-}
-
 const fetchLifetimeStatsFromBackend = async (profile: PlayerProfile): Promise<LifetimeStats> => {
     console.log("Fetching lifetime stats from backend...");
 
@@ -307,8 +254,60 @@ export function useGame() {
 
   const [isLifetimeStatsVisible, setIsLifetimeStatsVisible] = useState(false);
   const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats>(INITIAL_LIFETIME_STATS);
+
+  const [isMatchRequestNotificationOpen, setIsMatchRequestNotificationOpen] = useState(false);
+  const [requestedMatchId, setRequestedMatchId] = useState<string>("");
+  const [matchRequestInitiatorUserName, setMatchRequestInitiatorUserName] = useState<string>("");
   
   const { toast } = useToast();
+
+  const {
+    connectToWebSocket,
+    subscribeToRemoteMatch,
+    updateRemoteMatchState
+  } = useWebSocket({
+        onMatchUpdateAction: (matchData : MatchData) => {
+            restoreGameFromData(matchData);
+        }
+    });
+
+    const fetchMatchStateFromBackend = async (): Promise<MatchData | null> => {
+        console.log("Attempting to fetch match state from backend...");
+
+        const localStorageMatchId = localStorage.getItem("matchId");
+        if (!localStorageMatchId) return null;
+
+        try {
+            const response = await fetch(`http://localhost:8080/match/restore/${localStorageMatchId}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (response.status === 401) {
+                throw new Error("Unauthorized");
+            }
+
+            if (!response.ok) {
+                throw new Error("Something went wrong.");
+            }
+
+            await establishWebSocketConnection();
+            return await response.json();
+        } catch (error) {
+            console.error('Error restoring match', error);
+            return null;
+        }
+    }
+
+  const establishWebSocketConnection = async (): Promise<void> => {
+     // Step 1: re-establish the connection to the websocket
+     connectToWebSocket(() => {
+       // Step 2: if a match is in progress then subscribe to that topic
+       const localStorageMatchId = localStorage.getItem("matchId");
+       if (!localStorageMatchId) return;
+       subscribeToRemoteMatch(localStorageMatchId);
+     });
+  }
 
   const restoreGameFromData = useCallback((data: MatchData) => {
     setMatchData(data);
@@ -333,6 +332,33 @@ export function useGame() {
     };
     restore();
   }, [restoreGameFromData]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const eventSource = new EventSourcePolyfill(`http://localhost:8080/sse/subscribe/${profile.idpSubject}`, {
+      withCredentials: true,
+    });
+
+    eventSource.addEventListener("match-request", (event) => {
+        console.log("SSE match-request received");
+        const message = event as MessageEvent;
+      const payload: MatchRequestPayload = JSON.parse(message.data);
+
+        setMatchRequestInitiatorUserName(payload.initiatorUserName);
+        setRequestedMatchId(payload.matchId);
+        setIsMatchRequestNotificationOpen(true);
+    });
+
+    eventSource.onerror = () => {
+      console.log("SSE connection error");
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close(); // Clean up when component unmounts or isLoggedIn becomes false
+    };
+  }, [isLoggedIn]);
   
   const gameConfig: GameConfig | null = useMemo(() => {
     if (!matchData) return null;
@@ -440,6 +466,20 @@ export function useGame() {
     setIsLifetimeStatsVisible(prev => !prev);
   };
 
+  const handleMatchRequestNotificationAccept = async () => {
+      console.log("attempting to subscribe to remote match", requestedMatchId);
+      localStorage.setItem('matchId', requestedMatchId);
+
+      await establishWebSocketConnection();
+
+      setIsMatchRequestNotificationOpen(false);
+  };
+
+  const handleMatchRequestNotificationCancel = async () => {
+      // TODO: what do we do to notify originator of a cancelled request?
+      setIsMatchRequestNotificationOpen(false);
+  };
+
   const handleSaveProfile = async (newProfile: PlayerProfile) => {
     try {
       await saveProfileToBackend(newProfile);
@@ -498,8 +538,7 @@ export function useGame() {
       };
 
     switch (mapGameModeToBackend(config.gameMode)) {
-        case 'LOCAL':
-        case 'REMOTE': {
+        case 'LOCAL': {
             const newLocalMatchConfigRequest: MatchConfigRequest = {
                 initiatorUserSubject: profile.idpSubject,
                 initiatorUserName: profile.name,
@@ -538,7 +577,7 @@ export function useGame() {
                     localStorage.setItem('matchId', matchId);
                 })
                 .catch(error => {
-                    console.error('Error configuring match');
+                    console.error('Error configuring local match');
                 });
             break;
         }
@@ -550,7 +589,7 @@ export function useGame() {
                 challengedUserSubject: config.player2Name,
                 challengedUserName: config.player2Name,
                 challengedUserLocation: "",
-                gameMode: "AI",
+                gameMode: mapGameModeToBackend(config.gameMode),
                 AILevel: stringToAiLevel[config.aiLevel],
                 initialStartingScore: config.initialScore,
                 totalLegs: config.legs,
@@ -582,7 +621,51 @@ export function useGame() {
                     localStorage.setItem('matchId', matchId);
                 })
                 .catch(error => {
-                    console.error('Error configuring match');
+                    console.error('Error configuring ai match');
+                });
+            break;
+        }
+        case 'REMOTE': {
+            const newRemoteMatchConfigRequest: MatchConfigRequest = {
+                initiatorUserSubject: profile.idpSubject,
+                initiatorUserName: profile.name,
+                initiatorUserLocation: profile.location,
+                challengedUserSubject: config.player2Subject,
+                challengedUserName: config.player2Name,
+                challengedUserLocation: "",
+                gameMode: mapGameModeToBackend(config.gameMode),
+                initialStartingScore: config.initialScore,
+                totalLegs: config.legs,
+                currentLegStarterPlayerSubject: 'user1_subject',
+                currentTurnPlayerSubject: 'user1_subject'
+            }
+
+            fetch(`http://localhost:8080/match/remote/configure`,{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(newRemoteMatchConfigRequest)
+            })
+                .then((response) => {
+                    if (response.status === 401) {
+                        throw new Error("Unauthorized");
+                    }
+
+                    if (!response.ok) {
+                        throw new Error("Something went wrong.");
+                    }
+
+                    return response.text();
+                })
+                .then((matchId) => {
+                    newMatchData.matchId = matchId;
+                    localStorage.setItem('matchId', matchId);
+                    establishWebSocketConnection();
+                })
+                .catch(error => {
+                    console.error('Error configuring remote match');
                 });
             break;
         }
@@ -717,6 +800,7 @@ export function useGame() {
   }, [winner, matchWinner, scores, currentPlayer, toast]);
   
   const submitScore = useCallback((scoreToSubmit: number) => {
+      // todo: add check for remote game and  call updateRemoteMatchState()
     if (winner || matchWinner || isCheckoutPending || !matchData) return;
 
     const score = scoreToSubmit;
@@ -777,6 +861,44 @@ export function useGame() {
     saveMatchStateToBackend(newMatchData);
     
   }, [winner, matchWinner, scores, currentPlayer, toast, isCheckoutPending, matchData]);
+
+  const saveMatchStateToBackend = async (state: MatchData): Promise<void> => {
+    console.log("Saving match state to backend:", state);
+
+    switch (state.gameMode) {
+      case "LOCAL":
+      case "AI": {
+          try {
+              const response = await fetch(`http://localhost:8080/match/local/${state.matchId}/updateState`, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify(state)
+              });
+
+              if (response.status === 401) {
+                  throw new Error("Unauthorized");
+              }
+
+              if (!response.ok) {
+                  throw new Error("Something went wrong.");
+              }
+
+              console.log("Match state saved.");
+          } catch (error) {
+              console.error("Failed to save match state:", error);
+              throw error; // rethrow if you want the caller to handle it
+          }
+          break;
+      }
+      case "REMOTE": {
+          updateRemoteMatchState(state.matchId, state);
+          break;
+      }
+    }
+  }
 
   const handleNumberPress = (num: string) => {
     setInputValue((prev) => {
@@ -1039,5 +1161,9 @@ export function useGame() {
     isLifetimeStatsVisible,
     lifetimeStats,
     toggleLifetimeStats,
+    matchRequestInitiatorUserName,
+    isMatchRequestNotificationOpen,
+    handleMatchRequestNotificationAccept,
+    handleMatchRequestNotificationCancel,
   };
 }
