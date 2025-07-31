@@ -85,7 +85,7 @@ export const useWebSocket = ({ onMatchUpdateAction } : UseWebSocketProps) => {
         });
     };
 
-    const disconnect = () => {
+    const disconnectWebSocket = () => {
         if (subscription.current) {
             subscription.current.unsubscribe();
         }
@@ -95,7 +95,7 @@ export const useWebSocket = ({ onMatchUpdateAction } : UseWebSocketProps) => {
 
     useEffect(() => {
         return () => {
-            disconnect();
+            disconnectWebSocket();
         };
     }, []);
 
@@ -103,6 +103,6 @@ export const useWebSocket = ({ onMatchUpdateAction } : UseWebSocketProps) => {
         connectToWebSocket,
         subscribeToRemoteMatch,
         updateRemoteMatchState,
-        disconnect,
+        disconnectWebSocket,
     };
 };

@@ -119,6 +119,7 @@ const DEFAULT_MATCH_REQUEST_PAYLOAD: MatchRequestPayload = {
     initiatorUserName: '',
     initiatorUserSubject: '',
     initiatorUserLocation: '',
+    challengedUserName: '',
     initialStartingScore: 501,
     totalLegs: 3,
 };
@@ -266,15 +267,20 @@ export function useGame() {
   const [isLifetimeStatsVisible, setIsLifetimeStatsVisible] = useState(false);
   const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats>(INITIAL_LIFETIME_STATS);
 
+  const [isWaitingOnMatchRequestResponse, setIsWaitingOnMatchRequestResponse] = useState(false);
   const [isMatchRequestNotificationOpen, setIsMatchRequestNotificationOpen] = useState(false);
   const [matchRequestConfig, setMatchRequestConfig] = useState<MatchRequestPayload>(DEFAULT_MATCH_REQUEST_PAYLOAD);
-  
+
+  const [initiatorUserLegsWon, setInitiatorUserLegsWon] = useState<number>(0);
+  const [challengedUserLegsWon, setChallengedUserLegsWon] = useState<number>(0);
+
   const { toast } = useToast();
 
   const {
     connectToWebSocket,
     subscribeToRemoteMatch,
-    updateRemoteMatchState
+    updateRemoteMatchState,
+    disconnectWebSocket
   } = useWebSocket({
         onMatchUpdateAction: (matchData : MatchData) => {
             restoreGameFromData(matchData);
@@ -323,14 +329,42 @@ export function useGame() {
     setMatchData(data);
     setIsGameStarted(true);
     // Reset transient state that isn't saved
-    setInputValue("");
+    setIsLegWon(false);
     setWinner(null);
+    setInputValue("");
     setMatchWinner(data.matchStatus === 'COMPLETED' ? (data.initiatorUserMatchState.legsWon > data.challengedUserMatchState.legsWon ? 'player1' : 'player2') : null);
     setIsAiThinking(false);
-    setIsLegWon(false);
     setIsCheckoutPending(false);
     setPendingCheckout(null);
-  }, []);
+
+    if (data.gameMode === 'REMOTE') {
+        if (data.matchStatus === 'COMPLETED') {
+            if (data.initiatorUserMatchState.legsWon === Math.ceil(data.totalLegs / 2)) {
+                setMatchWinner('player1');
+            } else {
+                setMatchWinner('player2');
+            }
+        }
+
+        setInitiatorUserLegsWon((prevInitiatorLegs) => {
+            if (data.initiatorUserMatchState.legsWon > prevInitiatorLegs) {
+                setWinner('player1');
+                setIsLegWon(true);
+                return data.initiatorUserMatchState.legsWon;
+            }
+            return prevInitiatorLegs;
+        });
+
+        setChallengedUserLegsWon((prevChallengedLegs) => {
+            if (data.challengedUserMatchState.legsWon > prevChallengedLegs) {
+                setWinner('player2');
+                setIsLegWon(true);
+                return data.challengedUserMatchState.legsWon;
+            }
+            return prevChallengedLegs;
+        });
+    }
+  },[]);
 
   // On mount, try to restore game state
   useEffect(() => {
@@ -357,6 +391,21 @@ export function useGame() {
 
       setMatchRequestConfig(payload);
       setIsMatchRequestNotificationOpen(true);
+    });
+
+    eventSource.addEventListener("match-request-accepted", (event) => {
+      console.log("SSE match-request accepted");
+      setIsWaitingOnMatchRequestResponse(false);
+    });
+
+    eventSource.addEventListener("match-request-rejected", (event) => {
+      console.log("SSE match-request rejected");
+      // TODO: figure out why this doesn't get rid of the waiting on match screen
+      // set property that indicates screen can transition from "waiting" to "home"
+      localStorage.remoteItem('matchId');
+      disconnectWebSocket();
+      setIsGameStarted(false);
+      setIsWaitingOnMatchRequestResponse(false);
     });
 
     eventSource.onerror = () => {
@@ -523,11 +572,58 @@ export function useGame() {
       };
       setMatchData(newMatchData);
       setIsGameStarted(true);
+
+      // TODO: make POST request to server to indicate match is accepted
+
+      fetch(`http://localhost:8080/matchRequest/${matchRequestConfig.matchId}/accept`,{
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: matchRequestConfig.initiatorUserSubject
+      })
+          .then((response) => {
+              if (response.status === 401) {
+                  throw new Error("Unauthorized");
+              }
+
+              if (!response.ok) {
+                  throw new Error("Something went wrong.");
+              }
+
+              console.log('Remote match challenge accepted.')
+          })
+          .catch(error => {
+              console.error('Error accepting remote match');
+          });
   };
 
   const handleMatchRequestNotificationCancel = async () => {
-      // TODO: what do we do to notify originator of a cancelled request?
       setIsMatchRequestNotificationOpen(false);
+
+      fetch(`http://localhost:8080/matchRequest/${matchRequestConfig.matchId}/reject`,{
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: matchRequestConfig.initiatorUserSubject
+      })
+          .then((response) => {
+              if (response.status === 401) {
+                  throw new Error("Unauthorized");
+              }
+
+              if (!response.ok) {
+                  throw new Error("Something went wrong.");
+              }
+
+              console.log('Remote match challenge accepted.')
+          })
+          .catch(error => {
+              console.error('Error accepting remote match');
+          });
   };
 
   const handleSaveProfile = async (newProfile: PlayerProfile) => {
@@ -690,6 +786,8 @@ export function useGame() {
                 currentTurnPlayerSubject: 'user1_subject'
             }
 
+            // TODO: will need error handling added in case request to server fails  (error dialog to be triggered in catch block
+
             fetch(`http://localhost:8080/match/remote/configure`,{
                 method: 'POST',
                 headers: {
@@ -706,10 +804,20 @@ export function useGame() {
                     if (!response.ok) {
                         throw new Error("Something went wrong.");
                     }
-
                     return response.text();
                 })
                 .then((matchId) => {
+                    const matchRequestConfig: MatchRequestPayload = {
+                        matchId: matchId,
+                        initiatorUserName: profile.name,
+                        initiatorUserSubject: profile.idpSubject,
+                        initiatorUserLocation: profile.location,
+                        challengedUserName: config.player2Name,
+                        initialStartingScore: config.initialScore,
+                        totalLegs: config.legs
+                    };
+                    setMatchRequestConfig(matchRequestConfig);
+                    setIsWaitingOnMatchRequestResponse(true);
                     newMatchData.matchId = matchId;
                     localStorage.setItem('matchId', matchId);
                     establishWebSocketConnection();
@@ -982,7 +1090,9 @@ export function useGame() {
        setTimeout(() => {
         startNewLeg();
       }, 500); // short delay
-    }
+    } else {
+       setIsMatchWinnerDialogOpen(true);
+     }
   }, [matchWinner, startNewLeg]);
 
   const acknowledgeMatchWin = () => {
@@ -1212,6 +1322,7 @@ export function useGame() {
     lifetimeStats,
     toggleLifetimeStats,
     matchRequestConfig,
+    isWaitingOnMatchRequestResponse,
     isMatchRequestNotificationOpen,
     handleMatchRequestNotificationAccept,
     handleMatchRequestNotificationCancel,

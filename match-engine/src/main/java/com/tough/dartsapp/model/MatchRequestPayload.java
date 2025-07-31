@@ -5,14 +5,24 @@ public class MatchRequestPayload {
     private String initiatorUserName;
     private String initiatorUserSubject;
     private String initiatorUserLocation;
+    private String challengedUserName;
     private int initialStartingScore;
     private int totalLegs;
 
-    public MatchRequestPayload(String matchId, String initiatorUserName, String initiatorUserSubject, String initiatorUserLocation, int initialStartingScore, int totalLegs) {
+    public MatchRequestPayload(
+            String matchId,
+            String initiatorUserName,
+            String initiatorUserSubject,
+            String initiatorUserLocation,
+            String challengedUserName,
+            int initialStartingScore,
+            int totalLegs
+    ) {
         this.matchId = matchId;
         this.initiatorUserName = initiatorUserName;
         this.initiatorUserSubject = initiatorUserSubject;
-        this.setInitiatorUserLocation(initiatorUserLocation);
+        this.initiatorUserLocation = initiatorUserLocation;
+        this.challengedUserName = challengedUserName;
         this.initialStartingScore = initialStartingScore;
         this.totalLegs = totalLegs;
     }
@@ -63,5 +73,13 @@ public class MatchRequestPayload {
 
     public void setInitiatorUserLocation(String initiatorUserLocation) {
         this.initiatorUserLocation = initiatorUserLocation;
+    }
+
+    public String getChallengedUserName() {
+        return challengedUserName;
+    }
+
+    public void setChallengedUserName(String challengedUserName) {
+        this.challengedUserName = challengedUserName;
     }
 }

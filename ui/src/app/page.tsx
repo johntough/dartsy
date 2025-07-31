@@ -9,7 +9,7 @@ import { useGame } from "@/hooks/use-game";
 import CheckoutDartsDialog from "@/components/checkout-darts-dialog";
 import WinnerDialog from "@/components/winner-dialog";
 import { Button } from "@/components/ui/button";
-import { LogIn, Target } from "lucide-react";
+import {LogIn, Target, Hourglass} from "lucide-react";
 import DartboardDialog from "@/components/dartboard-dialog";
 import MatchStats from "@/components/match-stats";
 import type { GameConfig } from "@/hooks/use-game";
@@ -79,6 +79,7 @@ export default function Home() {
     lifetimeStats,
     toggleLifetimeStats,
     matchRequestConfig,
+    isWaitingOnMatchRequestResponse,
     isMatchRequestNotificationOpen,
     handleMatchRequestNotificationAccept,
     handleMatchRequestNotificationCancel,
@@ -166,6 +167,71 @@ export default function Home() {
   }
 
   if (isGameStarted && gameConfig) {
+    let screenToRender: React.ReactNode;
+
+    if (isWaitingOnMatchRequestResponse) {
+      screenToRender = (
+        <main className="flex flex-grow flex-col items-center justify-center text-center p-4">
+          <div className="space-y-4">
+            <Hourglass className="h-24 w-24 mx-auto text-primary" />
+            <h1 className="text-4xl font-bold">You have challenged {matchRequestConfig.challengedUserName}</h1>
+            <div className="text-xl text-muted-foreground max-w-md mx-auto">
+              <p>Waiting on a response.</p>
+              <p>Starting score: {matchRequestConfig.initialStartingScore}, best of {matchRequestConfig.totalLegs} legs!</p>
+            </div>
+          </div>
+        </main>
+      );
+    } else if (isStatsVisible) {
+      screenToRender = (
+          <main className="flex flex-grow flex-col items-center py-8 w-full">
+            <MatchStats
+                stats={stats}
+                player1Name={player1Name}
+                player2Name={player2Name}
+                player1Location={gameConfig.player1Location}
+                gameMode={gameMode}
+                matchAverages={matchAverages}
+                legsWon={gameConfig.legsWon}
+                onBack={matchWinner ? handleNewMatch : toggleStatsScreen}
+                matchWinner={matchWinner}
+            />
+          </main>
+      );
+    } else {
+      screenToRender = (
+          <main className="flex flex-grow flex-col items-center py-8 w-full">
+            <GameBoard
+                scores={scores}
+                matchAverages={matchAverages}
+                legAverages={legAverages}
+                currentPlayer={currentPlayer}
+                inputValue={inputValue}
+                winner={winner}
+                matchWinner={matchWinner}
+                gameMode={gameMode}
+                isAiThinking={isAiThinking}
+                player1Name={player1Name}
+                player2Name={player2Name}
+                player1Location={gameConfig.player1Location}
+                history={legHistory}
+                legs={gameConfig.legs}
+                legsWon={gameConfig.legsWon}
+                legStarter={legStarter}
+                showAverage={showAverage}
+                checkoutSuggestions={checkoutSuggestions}
+                isSuggestionsLoading={isSuggestionsLoading}
+                handleNumberPress={handleNumberPress}
+                handleDelete={handleDelete}
+                handleSubmit={handleSubmit}
+                handleQuickScore={handleQuickScore}
+                handleCheckout={handleCheckout}
+                openDartboard={openDartboard}
+                toggleStatsScreen={toggleStatsScreen}
+            />
+          </main>
+      );
+    }
     return (
       <div className="flex min-h-screen w-full flex-col items-center bg-secondary">
         <Header
@@ -183,50 +249,7 @@ export default function Home() {
           onToggleLifetimeStats={toggleLifetimeStats}
           onToggleHowToPlay={toggleHowToPlay}
         />
-        <main className="flex flex-grow flex-col items-center py-8 w-full">
-          {isStatsVisible ? (
-            <MatchStats 
-              stats={stats}
-              player1Name={player1Name}
-              player2Name={player2Name}
-              player1Location={gameConfig.player1Location}
-              gameMode={gameMode}
-              matchAverages={matchAverages}
-              legsWon={gameConfig.legsWon}
-              onBack={matchWinner ? handleNewMatch : toggleStatsScreen}
-              matchWinner={matchWinner}
-            />
-          ) : (
-            <GameBoard
-              scores={scores}
-              matchAverages={matchAverages}
-              legAverages={legAverages}
-              currentPlayer={currentPlayer}
-              inputValue={inputValue}
-              winner={winner}
-              matchWinner={matchWinner}
-              gameMode={gameMode}
-              isAiThinking={isAiThinking}
-              player1Name={player1Name}
-              player2Name={player2Name}
-              player1Location={gameConfig.player1Location}
-              history={legHistory}
-              legs={gameConfig.legs}
-              legsWon={gameConfig.legsWon}
-              legStarter={legStarter}
-              showAverage={showAverage}
-              checkoutSuggestions={checkoutSuggestions}
-              isSuggestionsLoading={isSuggestionsLoading}
-              handleNumberPress={handleNumberPress}
-              handleDelete={handleDelete}
-              handleSubmit={handleSubmit}
-              handleQuickScore={handleQuickScore}
-              handleCheckout={handleCheckout}
-              openDartboard={openDartboard}
-              toggleStatsScreen={toggleStatsScreen}
-            />
-          )}
-        </main>
+        {screenToRender}
         <CheckoutDartsDialog
           isOpen={isCheckoutPending}
           score={checkoutScore}
@@ -278,16 +301,16 @@ export default function Home() {
         onToggleHowToPlay={toggleHowToPlay}
       />
       <main className="flex flex-grow flex-col items-center justify-center text-center p-4">
-        <div className="space-y-4">
-            <Target className="h-24 w-24 mx-auto text-primary" />
-          <h1 className="text-4xl font-bold">Welcome to Dart Duel</h1>
-          <p className="text-xl text-muted-foreground max-w-md mx-auto">
-            The ultimate darts scoring app. Start a new game to challenge a friend or test your skills against our AI opponent.
-          </p>
-          <Button size="lg" onClick={handleStartSetup} disabled={!isLoggedIn} className="h-14 px-8 text-lg">
-            Start New Game
-          </Button>
-        </div>
+            <div className="space-y-4">
+              <Target className="h-24 w-24 mx-auto text-primary" />
+              <h1 className="text-4xl font-bold">Welcome to Dart Duel</h1>
+              <p className="text-xl text-muted-foreground max-w-md mx-auto">
+                The ultimate darts scoring app. Start a new game to challenge a friend or test your skills against our AI opponent.
+              </p>
+              <Button size="lg" onClick={handleStartSetup} disabled={!isLoggedIn} className="h-14 px-8 text-lg">
+                Start New Game
+              </Button>
+            </div>
       </main>
       <MatchRequestNotificationDialog
           isOpen={isMatchRequestNotificationOpen}

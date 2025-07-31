@@ -31,10 +31,10 @@ export default function MatchWinnerDialog({
             <Trophy className="h-10 w-10" />
           </div>
           <AlertDialogTitle className="text-center text-2xl">
-            Congratulations, {winnerName}!
+            Match won by {winnerName}!
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center">
-            You are the Dart Duel champion!
+            {winnerName} is the Dart Duel champion!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogAction asChild>

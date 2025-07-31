@@ -42,6 +42,7 @@ public class MatchRequestService {
                 matchConfigRequest.getInitiatorUserName(),
                 matchConfigRequest.getInitiatorUserSubject(),
                 matchConfigRequest.getInitiatorUserLocation(),
+                matchConfigRequest.getChallengedUserName(),
                 matchConfigRequest.getInitialStartingScore(),
                 matchConfigRequest.getTotalLegs()
         );
@@ -53,6 +54,40 @@ public class MatchRequestService {
                     .data(matchRequestPayload));
         } catch (IOException e) {
             emitters.remove(matchConfigRequest.getChallengedUserSubject());
+        }
+    }
+
+    public void acceptMatchRequest(String matchId, String initiatorUserSubject) {
+        SseEmitter emitter = emitters.get(initiatorUserSubject);
+
+        if (emitter == null) {
+            return;
+        }
+
+        try {
+            LOGGER.info("Sending match request acceptance message to {}", initiatorUserSubject);
+            emitter.send(SseEmitter.event()
+                    .name("match-request-accepted")
+                    .data(true));
+        } catch (IOException e) {
+            emitters.remove(initiatorUserSubject);
+        }
+    }
+
+    public void rejectMatchRequest(String matchId, String initiatorUserSubject) {
+        SseEmitter emitter = emitters.get(initiatorUserSubject);
+
+        if (emitter == null) {
+            return;
+        }
+
+        try {
+            LOGGER.info("Sending match request rejection message to {}", initiatorUserSubject);
+            emitter.send(SseEmitter.event()
+                    .name("match-request-rejected")
+                    .data(true));
+        } catch (IOException e) {
+            emitters.remove(initiatorUserSubject);
         }
     }
 }

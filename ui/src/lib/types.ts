@@ -15,6 +15,7 @@ export interface MatchRequestPayload {
   initiatorUserName: string;
   initiatorUserSubject: string;
   initiatorUserLocation: string;
+  challengedUserName: string;
   initialStartingScore: number;
   totalLegs: number;
 }
