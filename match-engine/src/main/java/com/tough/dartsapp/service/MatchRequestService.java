@@ -1,5 +1,6 @@
 package com.tough.dartsapp.service;
 
+import com.tough.dartsapp.model.MatchConfigRequest;
 import com.tough.dartsapp.model.MatchRequestPayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +30,8 @@ public class MatchRequestService {
     }
 
     // TODO: implement error handling flows
-    public void notifyUserOfMatchRequest(String challengedUserSubject, String initiatorUserName, String matchId) {
-        SseEmitter emitter = emitters.get(challengedUserSubject);
+    public void notifyUserOfMatchRequest(String matchId, MatchConfigRequest matchConfigRequest) {
+        SseEmitter emitter = emitters.get(matchConfigRequest.getChallengedUserSubject());
 
         if (emitter == null) {
             return;
@@ -38,16 +39,20 @@ public class MatchRequestService {
 
         MatchRequestPayload matchRequestPayload = new MatchRequestPayload(
                 matchId,
-                initiatorUserName
+                matchConfigRequest.getInitiatorUserName(),
+                matchConfigRequest.getInitiatorUserSubject(),
+                matchConfigRequest.getInitiatorUserLocation(),
+                matchConfigRequest.getInitialStartingScore(),
+                matchConfigRequest.getTotalLegs()
         );
 
         try {
-            LOGGER.info("Sending match request to {}", challengedUserSubject);
+            LOGGER.info("Sending match request to {}", matchConfigRequest.getChallengedUserSubject());
             emitter.send(SseEmitter.event()
                     .name("match-request")
                     .data(matchRequestPayload));
         } catch (IOException e) {
-            emitters.remove(challengedUserSubject);
+            emitters.remove(matchConfigRequest.getChallengedUserSubject());
         }
     }
 }

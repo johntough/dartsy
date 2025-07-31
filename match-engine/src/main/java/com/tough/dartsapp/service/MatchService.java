@@ -40,11 +40,7 @@ public class MatchService {
         storeInRedis(matchState);
 
         // Notify challenged user of match request
-        matchRequestService.notifyUserOfMatchRequest(
-                matchState.getChallengedUserMatchState().getSubject(),
-                matchState.getInitiatorUserMatchState().getName(),
-                matchState.getMatchId()
-        );
+        matchRequestService.notifyUserOfMatchRequest(matchId, matchConfigRequest);
 
         return matchId;
     }

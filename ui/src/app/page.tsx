@@ -78,7 +78,7 @@ export default function Home() {
     isLifetimeStatsVisible,
     lifetimeStats,
     toggleLifetimeStats,
-    matchRequestInitiatorUserName,
+    matchRequestConfig,
     isMatchRequestNotificationOpen,
     handleMatchRequestNotificationAccept,
     handleMatchRequestNotificationCancel,
@@ -291,7 +291,7 @@ export default function Home() {
       </main>
       <MatchRequestNotificationDialog
           isOpen={isMatchRequestNotificationOpen}
-          matchRequestInitiatorUserName={matchRequestInitiatorUserName}
+          matchRequestConfig={matchRequestConfig}
           onAccept={handleMatchRequestNotificationAccept}
           onCancel={handleMatchRequestNotificationCancel}
       />

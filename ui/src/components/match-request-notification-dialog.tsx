@@ -10,18 +10,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "./ui/button";
-import { Sword } from "lucide-react";
+import { Target } from "lucide-react";
+import { MatchRequestPayload } from "@/lib/types";
 
 interface MatchRequestNotificationDialogProps {
   isOpen: boolean;
-  matchRequestInitiatorUserName: string;
+  matchRequestConfig: MatchRequestPayload;
   onAccept: () => void;
   onCancel: () => void;
 }
 
 export default function MatchRequestNotificationDialog({
   isOpen,
-  matchRequestInitiatorUserName,
+  matchRequestConfig,
   onAccept,
   onCancel,
 }: MatchRequestNotificationDialogProps) {
@@ -30,13 +31,14 @@ export default function MatchRequestNotificationDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400/20 text-yellow-500">
-            <Sword className="h-10 w-10" />
+            <Target className="h-10 w-10" />
           </div>
           <AlertDialogTitle className="text-center text-2xl">
             Match Challenge!
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center">
-            You have been challenged to a match by {matchRequestInitiatorUserName}
+            <p>You have been challenged to a match by {matchRequestConfig.initiatorUserName}.</p>
+            <p>It's a game of {matchRequestConfig.initialStartingScore}, best of {matchRequestConfig.totalLegs} legs!</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogAction asChild>

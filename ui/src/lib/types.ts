@@ -10,6 +10,15 @@ export interface RoundScore {
   winningScore: boolean;
 }
 
+export interface MatchRequestPayload {
+  matchId: string;
+  initiatorUserName: string;
+  initiatorUserSubject: string;
+  initiatorUserLocation: string;
+  initialStartingScore: number;
+  totalLegs: number;
+}
+
 export interface UserMatchState {
   subject: string;
   name: string;

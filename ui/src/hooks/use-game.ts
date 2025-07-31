@@ -8,7 +8,14 @@ import {
   type AdjustDifficultyInput,
 } from "@/ai/flows/ai-opponent-difficulty-tuning";
 import { CHECKOUT_DATA } from "@/lib/checkout-data";
-import type {MatchData, UserMatchState, RoundScore, GameMode as BackendGameMode, MatchConfigRequest} from "@/lib/types";
+import type {
+    MatchData,
+    UserMatchState,
+    RoundScore,
+    GameMode as BackendGameMode,
+    MatchConfigRequest,
+    MatchRequestPayload
+} from "@/lib/types";
 import {useWebSocket} from "@/hooks/use-websocket";
 import { EventSourcePolyfill } from "event-source-polyfill";
 
@@ -31,11 +38,6 @@ export type PlayerProfile = {
   email: string;
   location: string; // country code
 };
-
-interface MatchRequestPayload {
-    matchId: string;
-    initiatorUserName: string;
-}
 
 export type LifetimeStats = {
     gamesPlayed: number;
@@ -110,6 +112,15 @@ const INITIAL_PROFILE: PlayerProfile = {
   email: "",
   idpSubject: "",
   location: "none",
+};
+
+const DEFAULT_MATCH_REQUEST_PAYLOAD: MatchRequestPayload = {
+    matchId: '',
+    initiatorUserName: '',
+    initiatorUserSubject: '',
+    initiatorUserLocation: '',
+    initialStartingScore: 501,
+    totalLegs: 3,
 };
 
 const INITIAL_LIFETIME_STATS: LifetimeStats = {
@@ -256,8 +267,7 @@ export function useGame() {
   const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats>(INITIAL_LIFETIME_STATS);
 
   const [isMatchRequestNotificationOpen, setIsMatchRequestNotificationOpen] = useState(false);
-  const [requestedMatchId, setRequestedMatchId] = useState<string>("");
-  const [matchRequestInitiatorUserName, setMatchRequestInitiatorUserName] = useState<string>("");
+  const [matchRequestConfig, setMatchRequestConfig] = useState<MatchRequestPayload>(DEFAULT_MATCH_REQUEST_PAYLOAD);
   
   const { toast } = useToast();
 
@@ -341,13 +351,12 @@ export function useGame() {
     });
 
     eventSource.addEventListener("match-request", (event) => {
-        console.log("SSE match-request received");
-        const message = event as MessageEvent;
+      console.log("SSE match-request received");
+      const message = event as MessageEvent;
       const payload: MatchRequestPayload = JSON.parse(message.data);
 
-        setMatchRequestInitiatorUserName(payload.initiatorUserName);
-        setRequestedMatchId(payload.matchId);
-        setIsMatchRequestNotificationOpen(true);
+      setMatchRequestConfig(payload);
+      setIsMatchRequestNotificationOpen(true);
     });
 
     eventSource.onerror = () => {
@@ -467,12 +476,53 @@ export function useGame() {
   };
 
   const handleMatchRequestNotificationAccept = async () => {
-      console.log("attempting to subscribe to remote match", requestedMatchId);
-      localStorage.setItem('matchId', requestedMatchId);
+      console.log("attempting to subscribe to remote match", matchRequestConfig.matchId);
+      localStorage.setItem('matchId', matchRequestConfig.matchId);
 
       await establishWebSocketConnection();
 
       setIsMatchRequestNotificationOpen(false);
+
+      const newMatchData: MatchData = {
+          matchId: matchRequestConfig.matchId,
+          matchStatus: 'IN_PROGRESS',
+          gameMode: 'REMOTE',
+          aiLevel: undefined,
+          initialStartingScore: matchRequestConfig.initialStartingScore,
+          totalLegs: matchRequestConfig.totalLegs,
+          currentLegStarterPlayerSubject: 'user1_subject',
+          currentTurnPlayerSubject: 'user1_subject',
+          initiatorUserMatchState: {
+              subject: matchRequestConfig.initiatorUserSubject,
+              name: matchRequestConfig.initiatorUserName,
+              location: matchRequestConfig.initiatorUserLocation,
+              highestCheckout: 0,
+              bestLeg: Infinity,
+              oneHundredAndEightyCount: 0,
+              oneHundredAndFortyCount: 0,
+              oneHundredCount: 0,
+              legsWon: 0,
+              totalMatchScore: 0,
+              totalMatchDartsThrown: 0,
+              scores: []
+          },
+          challengedUserMatchState: {
+              subject: profile.idpSubject,
+              name: profile.name,
+              location: profile.location,
+              highestCheckout: 0,
+              bestLeg: Infinity,
+              oneHundredAndEightyCount: 0,
+              oneHundredAndFortyCount: 0,
+              oneHundredCount: 0,
+              legsWon: 0,
+              totalMatchScore: 0,
+              totalMatchDartsThrown: 0,
+              scores: []
+          }
+      };
+      setMatchData(newMatchData);
+      setIsGameStarted(true);
   };
 
   const handleMatchRequestNotificationCancel = async () => {
@@ -1161,7 +1211,7 @@ export function useGame() {
     isLifetimeStatsVisible,
     lifetimeStats,
     toggleLifetimeStats,
-    matchRequestInitiatorUserName,
+    matchRequestConfig,
     isMatchRequestNotificationOpen,
     handleMatchRequestNotificationAccept,
     handleMatchRequestNotificationCancel,
