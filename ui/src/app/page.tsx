@@ -131,8 +131,12 @@ export default function Home() {
         />
         <main className="flex flex-grow flex-col items-center justify-center text-center p-4">
           <div className="space-y-4">
-              <Target className="h-24 w-24 mx-auto text-primary" />
-            <h1 className="text-4xl font-bold">Welcome to Dart Duel</h1>
+            <img
+                src="/images/dart.png"
+                alt="Descriptive alt text"
+                className="h-24 w-24 mx-auto"
+            />
+            <h1 className="text-4xl font-bold">Welcome to Dartsy</h1>
             <p className="text-xl text-muted-foreground max-w-md mx-auto">
               Please log in to start playing.
             </p>
@@ -302,8 +306,12 @@ export default function Home() {
       />
       <main className="flex flex-grow flex-col items-center justify-center text-center p-4">
             <div className="space-y-4">
-              <Target className="h-24 w-24 mx-auto text-primary" />
-              <h1 className="text-4xl font-bold">Welcome to Dart Duel</h1>
+              <img
+                  src="/images/dart.png"
+                  alt="Descriptive alt text"
+                  className="h-24 w-24 mx-auto"
+              />
+              <h1 className="text-4xl font-bold">Welcome to Dartsy</h1>
               <p className="text-xl text-muted-foreground max-w-md mx-auto">
                 The ultimate darts scoring app. Start a new game to challenge a friend or test your skills against our AI opponent.
               </p>

@@ -1,4 +1,4 @@
-# **App Name**: Dart Duel
+# **App Name**: Dartsy
 
 ## Core Features:
 

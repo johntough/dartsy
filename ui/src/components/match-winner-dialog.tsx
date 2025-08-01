@@ -34,7 +34,7 @@ export default function MatchWinnerDialog({
             Match won by {winnerName}!
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center">
-            {winnerName} is the Dart Duel champion!
+            {winnerName} is the Dartsy champion!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogAction asChild>

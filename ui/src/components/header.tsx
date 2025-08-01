@@ -78,7 +78,7 @@ export default function Header({
                 <RotateCcw className="h-6 w-6" />
             </Button>
         )}
-        <h1 className="text-xl font-bold">{isLoggedIn ? `Welcome` : 'Dart Duel'}</h1>
+        <h1 className="text-xl font-bold">{isLoggedIn ? `Welcome` : 'Dartsy'}</h1>
         {isLoggedIn && (
            <Button variant="ghost" onClick={onToggleProfile} className="h-auto p-2">
              <div className="flex items-center gap-2">

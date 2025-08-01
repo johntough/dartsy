@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI agent that adjusts the difficulty of the AI opponent in the Dart Duel game based on the player's performance.
+ * @fileOverview An AI agent that adjusts the difficulty of the AI opponent in the Dartsy game based on the player's performance.
  *
  * - adjustDifficulty - A function that adjusts the AI opponent's difficulty.
  * - AdjustDifficultyInput - The input type for the adjustDifficulty function.

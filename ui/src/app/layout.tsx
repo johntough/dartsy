@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Dart Duel',
+  title: 'Dartsy',
   description: 'A darts scoring app with an AI opponent.',
 };
 
