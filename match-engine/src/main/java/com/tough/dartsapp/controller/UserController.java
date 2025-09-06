@@ -10,15 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
+@RestController
 public class UserController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
@@ -40,7 +36,7 @@ public class UserController {
         return ResponseEntity.ok().body(users);
     }
 
-    @PutMapping("user/{userId}")
+    @PutMapping("/user/{userId}")
     public ResponseEntity<Void> updateUserProfile(@RequestBody User updatedUser, @PathVariable String userId, HttpServletRequest request) {
         LOGGER.info("PUT user/{} called", userId);
 
@@ -55,7 +51,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("user/{userId}/lifetimeStats")
+    @GetMapping("/user/{userId}/lifetimeStats")
     public ResponseEntity<LifetimeStats> getLifetimeStats(@PathVariable String userId, HttpServletRequest request) {
         LOGGER.info("Get user/{}/lifetimeStats called", userId);
 

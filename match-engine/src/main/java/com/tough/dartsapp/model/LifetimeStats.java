@@ -25,35 +25,71 @@ public class LifetimeStats {
         return gamesPlayed;
     }
 
+    public void setGamesPlayed(int gamesPlayed) {
+        this.gamesPlayed = gamesPlayed;
+    }
+
     public int getGamesWon() {
         return gamesWon;
+    }
+
+    public void setGamesWon(int gamesWon) {
+        this.gamesWon = gamesWon;
     }
 
     public int getHighestCheckout() {
         return highestCheckout;
     }
 
+    public void setHighestCheckout(int highestCheckout) {
+        this.highestCheckout = highestCheckout;
+    }
+
     public int getBestLeg() {
         return bestLeg;
+    }
+
+    public void setBestLeg(int bestLeg) {
+        this.bestLeg = bestLeg;
     }
 
     public int getOneHundredPlusScores() {
         return oneHundredPlusScores;
     }
 
+    public void setOneHundredPlusScores(int oneHundredPlusScores) {
+        this.oneHundredPlusScores = oneHundredPlusScores;
+    }
+
     public int getOneHundredFortyPlusScores() {
         return oneHundredFortyPlusScores;
+    }
+
+    public void setOneHundredFortyPlusScores(int oneHundredFortyPlusScores) {
+        this.oneHundredFortyPlusScores = oneHundredFortyPlusScores;
     }
 
     public int getOneHundredEightyScores() {
         return oneHundredEightyScores;
     }
 
+    public void setOneHundredEightyScores(int oneHundredEightyScores) {
+        this.oneHundredEightyScores = oneHundredEightyScores;
+    }
+
     public int getNumberOfDartsThrown() {
         return numberOfDartsThrown;
     }
 
+    public void setNumberOfDartsThrown(int numberOfDartsThrown) {
+        this.numberOfDartsThrown = numberOfDartsThrown;
+    }
+
     public int getTotalScore() {
         return totalScore;
+    }
+
+    public void setTotalScore(int totalScore) {
+        this.totalScore = totalScore;
     }
 }

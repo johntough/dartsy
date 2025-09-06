@@ -26,6 +26,10 @@ public class User {
         return idpSubject;
     }
 
+    public void setIdpSubject(String idpSubject) {
+        this.idpSubject = idpSubject;
+    }
+
     public String getEmail() {
         return email;
     }
